@@ -76,10 +76,10 @@ async function seedSampleData(adminId: string) {
   ]);
 
   const [medicament, antiparasitaire, alimentation, accessoire] = await Promise.all([
-    prisma.category.create({ data: { name: "Médicament" } }),
-    prisma.category.create({ data: { name: "Antiparasitaire" } }),
-    prisma.category.create({ data: { name: "Alimentation" } }),
-    prisma.category.create({ data: { name: "Accessoire" } }),
+    prisma.category.create({ data: { name: "Médicament", code: "MED" } }),
+    prisma.category.create({ data: { name: "Antiparasitaire", code: "ANT" } }),
+    prisma.category.create({ data: { name: "Alimentation", code: "ALI" } }),
+    prisma.category.create({ data: { name: "Accessoire", code: "ACC" } }),
   ]);
 
   const [vetopharma, agrivet, zooNutrition] = await Promise.all([

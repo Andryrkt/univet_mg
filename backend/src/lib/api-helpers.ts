@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { Role } from "@prisma/client";
+import { Prisma, type Role } from "@prisma/client";
 import { getAuthUser, hasRole, type AuthPayload } from "@/lib/auth";
 
 export class ApiError extends Error {
@@ -25,6 +25,20 @@ export async function requireRole(request: Request, roles: Role[]): Promise<Auth
 export function handleApiError(error: unknown) {
   if (error instanceof ApiError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
+  }
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2003") {
+      return NextResponse.json(
+        { error: "Impossible : d'autres éléments dépendent encore de cette ressource" },
+        { status: 409 }
+      );
+    }
+    if (error.code === "P2025") {
+      return NextResponse.json({ error: "Ressource introuvable" }, { status: 404 });
+    }
+    if (error.code === "P2002") {
+      return NextResponse.json({ error: "Cette valeur existe déjà" }, { status: 409 });
+    }
   }
   console.error(error);
   return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 });

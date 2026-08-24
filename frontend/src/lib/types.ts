@@ -11,7 +11,7 @@ export type User = {
 
 export type Unit = { id: string; name: string; symbol: string | null };
 
-export type Category = { id: string; name: string; description: string | null };
+export type Category = { id: string; name: string; code: string; description: string | null; parentId: string | null };
 
 export type Supplier = {
   id: string;

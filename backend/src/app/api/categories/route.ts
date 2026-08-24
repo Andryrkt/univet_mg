@@ -20,9 +20,17 @@ export async function POST(request: Request) {
     if (!body.name) {
       return NextResponse.json({ error: "name est requis" }, { status: 400 });
     }
+    if (typeof body.code !== "string" || !/^[A-Za-z]{3}$/.test(body.code)) {
+      return NextResponse.json({ error: "code doit contenir exactement 3 lettres" }, { status: 400 });
+    }
 
     const category = await prisma.category.create({
-      data: { name: body.name, description: body.description ?? null },
+      data: {
+        name: body.name,
+        code: body.code.toUpperCase(),
+        description: body.description ?? null,
+        parentId: body.parentId ?? null,
+      },
     });
     return NextResponse.json(category, { status: 201 });
   } catch (error) {

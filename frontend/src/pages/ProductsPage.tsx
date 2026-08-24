@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import type { Product, Category, Unit } from "../lib/types";
+import { buildCategoryTree } from "../lib/categoryTree";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
@@ -153,7 +154,12 @@ export function ProductsPage() {
                   {p.name}
                   {p.sku ? <span className="ml-1 text-xs text-slate-400">({p.sku})</span> : null}
                 </td>
-                <td className="px-4 py-2 text-slate-700">{p.category.name}</td>
+                <td className="px-4 py-2 text-slate-700">
+                  <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-600">
+                    {p.category.code}
+                  </span>{" "}
+                  {p.category.name}
+                </td>
                 <td className="px-4 py-2 text-slate-700">{p.unit.name}</td>
                 <td className="px-4 py-2 text-right text-slate-700">{Number(p.purchasePrice).toFixed(2)}</td>
                 <td className="px-4 py-2 text-right text-slate-700">{Number(p.sellingPrice).toFixed(2)}</td>
@@ -196,9 +202,10 @@ export function ProductsPage() {
             onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
           >
             <option value="">Sélectionner…</option>
-            {categories.map((c) => (
+            {buildCategoryTree(categories).map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {"— ".repeat(c.depth)}
+                {c.code} — {c.name}
               </option>
             ))}
           </Select>
