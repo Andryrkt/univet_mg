@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+  SELLER
+}
+
+enum PurchaseOrderStatus {
+  PENDING
+  RECEIVED
+  CANCELLED
+}
+
+enum StockMovementType {
+  PURCHASE_RECEPTION
+  SALE
+  ADJUSTMENT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(SELLER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdPurchaseOrders PurchaseOrder[]
+  sales                 Sale[]
+  stockMovements        StockMovement[]
+}
+
+model Unit {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  symbol    String?
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  createdAt   DateTime  @default(now())
+  products    Product[]
+}
+
+model Supplier {
+  id            String          @id @default(cuid())
+  name          String
+  contactName   String?
+  phone         String?
+  email         String?
+  address       String?
+  createdAt     DateTime        @default(now())
+  purchaseOrders PurchaseOrder[]
+}
+
+model Product {
+  id             String              @id @default(cuid())
+  name           String
+  sku            String?             @unique
+  categoryId     String
+  category       Category            @relation(fields: [categoryId], references: [id])
+  unitId         String
+  unit           Unit                @relation(fields: [unitId], references: [id])
+  purchasePrice  Decimal             @db.Decimal(10, 2)
+  sellingPrice   Decimal             @db.Decimal(10, 2)
+  stockQuantity  Int                 @default(0)
+  alertThreshold Int                 @default(0)
+  isActive       Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  purchaseOrderItems PurchaseOrderItem[]
+  saleItems          SaleItem[]
+  stockMovements     StockMovement[]
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  address   String?
+  createdAt DateTime @default(now())
+
+  animals Animal[]
+  sales   Sale[]
+}
+
+model Animal {
+  id        String    @id @default(cuid())
+  clientId  String
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name      String
+  species   String
+  breed     String?
+  birthDate DateTime?
+  notes     String?
+  createdAt DateTime  @default(now())
+}
+
+model PurchaseOrder {
+  id         String              @id @default(cuid())
+  supplierId String
+  supplier   Supplier            @relation(fields: [supplierId], references: [id])
+  status     PurchaseOrderStatus @default(PENDING)
+  orderDate  DateTime            @default(now())
+  receivedAt DateTime?
+  createdById String
+  createdBy   User               @relation(fields: [createdById], references: [id])
+  createdAt   DateTime           @default(now())
+
+  items PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id])
+  quantityOrdered  Int
+  quantityReceived Int?
+  unitPrice        Decimal      @db.Decimal(10, 2)
+}
+
+model Sale {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+  sellerId    String
+  seller      User     @relation(fields: [sellerId], references: [id])
+  totalAmount Decimal  @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+
+  items SaleItem[]
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
+}
+
+model StockMovement {
+  id            String             @id @default(cuid())
+  productId     String
+  product       Product            @relation(fields: [productId], references: [id])
+  type          StockMovementType
+  quantity      Int
+  referenceType String?
+  referenceId   String?
+  note          String?
+  createdById   String
+  createdBy     User               @relation(fields: [createdById], references: [id])
+  createdAt     DateTime           @default(now())
+}

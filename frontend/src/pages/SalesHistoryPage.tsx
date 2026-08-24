@@ -1,0 +1,95 @@
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { api, ApiError } from "../lib/api";
+import type { Sale } from "../lib/types";
+import { Modal } from "../components/ui/Modal";
+
+export function SalesHistoryPage() {
+  const [searchParams] = useSearchParams();
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Sale | null>(null);
+
+  useEffect(() => {
+    api
+      .get<Sale[]>("/sales")
+      .then((data) => {
+        setSales(data);
+        const highlightId = searchParams.get("sale");
+        if (highlightId) {
+          const match = data.find((s) => s.id === highlightId);
+          if (match) setSelected(match);
+        }
+      })
+      .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur de chargement"))
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (loading) return <p className="text-slate-400">Chargement…</p>;
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold text-slate-900">Historique des ventes</h1>
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+        <table className="min-w-full divide-y divide-slate-200 text-sm">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="px-4 py-2 text-left font-medium text-slate-600">Date</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600">Client</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600">Vendeur</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600">Total</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {sales.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                  Aucune vente
+                </td>
+              </tr>
+            ) : (
+              sales.map((s) => (
+                <tr key={s.id} onClick={() => setSelected(s)} className="cursor-pointer hover:bg-slate-50">
+                  <td className="px-4 py-2 text-slate-700">{new Date(s.createdAt).toLocaleString()}</td>
+                  <td className="px-4 py-2 text-slate-700">{s.client.name}</td>
+                  <td className="px-4 py-2 text-slate-700">{s.seller.name}</td>
+                  <td className="px-4 py-2 text-right font-medium text-slate-900">
+                    {Number(s.totalAmount).toFixed(2)} Ar
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal open={!!selected} onClose={() => setSelected(null)} title="Détail de la vente">
+        {selected && (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500">
+              {new Date(selected.createdAt).toLocaleString()} · {selected.client.name} · vendu par {selected.seller.name}
+            </p>
+            <ul className="divide-y divide-slate-100 text-sm">
+              {selected.items.map((item) => (
+                <li key={item.id} className="flex items-center justify-between py-2">
+                  <span>
+                    {item.product.name} × {item.quantity}
+                  </span>
+                  <span className="font-medium">{Number(item.subtotal).toFixed(2)} Ar</span>
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center justify-between border-t border-slate-200 pt-2 font-semibold text-slate-900">
+              <span>Total</span>
+              <span>{Number(selected.totalAmount).toFixed(2)} Ar</span>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  );
+}
