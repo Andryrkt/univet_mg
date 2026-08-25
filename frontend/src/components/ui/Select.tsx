@@ -119,6 +119,7 @@ export function Select({ label, value, onChange, required, disabled, className =
       {label && (
         <label htmlFor={id} className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {label}
+          {required && <span className="text-red-500 dark:text-red-400"> *</span>}
         </label>
       )}
       <div className="relative">
