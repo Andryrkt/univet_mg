@@ -88,7 +88,14 @@ Fichiers dédiés à la production, séparés du setup de développement ci-dess
 - [docker-compose.prod.yml](docker-compose.prod.yml) — pas de bind-mounts, images buildées, healthchecks, et un service `migrate` qui applique les migrations Prisma avant que le backend ne démarre.
 - [backend/Dockerfile.prod](backend/Dockerfile.prod) — build multi-étapes, sortie `standalone` de Next.js, utilisateur non-root.
 - [frontend/Dockerfile.prod](frontend/Dockerfile.prod) — build Vite statique servi par nginx ([frontend/nginx.conf](frontend/nginx.conf), fallback SPA vers `index.html`).
-- [.env.production.example](.env.production.example) — modèle de variables à copier en `.env` et à personnaliser (secrets forts, vrais domaines).
+- [.env.production.example](.env.production.example) — modèle de variables commenté.
+- `.env.production` (non versionné, généré localement avec des secrets forts prêts à l'emploi — voir la commande ci-dessous) : il ne reste qu'à y remplacer `votredomaine.mg` par votre vrai domaine avant de le coller dans les variables d'environnement de Dokploy.
+
+  Pour regénérer des secrets à tout moment :
+  ```bash
+  openssl rand -base64 24   # POSTGRES_PASSWORD
+  openssl rand -base64 48   # JWT_SECRET
+  ```
 
 Dokploy embarque déjà son propre reverse proxy (Traefik) avec HTTPS automatique (Let's Encrypt) : il n'y a donc pas de reverse proxy supplémentaire dans `docker-compose.prod.yml`. Les services `backend` et `frontend` n'exposent leurs ports qu'en interne (`expose`, pas `ports`) — c'est Dokploy qui les route depuis les domaines configurés dans son interface.
 

@@ -3,6 +3,7 @@ node_modules/
 
 # Env
 .env
+.env.production
 
 # Next.js
 backend/.next/
