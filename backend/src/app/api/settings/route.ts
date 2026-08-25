@@ -30,12 +30,15 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "name est requis" }, { status: 400 });
     }
 
+    const expiryAlertDays = Number(body.expiryAlertDays);
+
     const data = {
       name: body.name,
       tagline: body.tagline || null,
       address: body.address || null,
       phone: body.phone || null,
       email: body.email || null,
+      expiryAlertDays: Number.isFinite(expiryAlertDays) && expiryAlertDays > 0 ? expiryAlertDays : 90,
     };
 
     const settings = await prisma.clinicSettings.upsert({

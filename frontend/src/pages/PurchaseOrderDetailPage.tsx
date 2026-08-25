@@ -21,6 +21,7 @@ export function PurchaseOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [receiveNow, setReceiveNow] = useState<Record<string, string>>({});
+  const [receiveExpiry, setReceiveExpiry] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   async function load(showSpinner = false) {
@@ -61,6 +62,7 @@ export function PurchaseOrderDetailPage() {
         items: order.items.map((item) => ({
           purchaseOrderItemId: item.id,
           quantityReceivedNow: Number(receiveNow[item.id] ?? 0),
+          expiryDate: receiveExpiry[item.id] || undefined,
         })),
       });
       await load();
@@ -154,6 +156,7 @@ export function PurchaseOrderDetailPage() {
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Déjà reçu</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Reste</th>
               {canReceive && <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">À réceptionner</th>}
+              {canReceive && <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Péremption</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -182,13 +185,27 @@ export function PurchaseOrderDetailPage() {
                       )}
                     </td>
                   )}
+                  {canReceive && (
+                    <td className="px-4 py-2">
+                      {remaining > 0 ? (
+                        <Input
+                          type="date"
+                          className="w-40"
+                          value={receiveExpiry[item.id] ?? ""}
+                          onChange={(e) => setReceiveExpiry((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        />
+                      ) : (
+                        <span className="text-slate-400 dark:text-slate-500">—</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               );
             })}
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={canReceive ? 5 : 4} className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">
+              <td colSpan={canReceive ? 6 : 4} className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">
                 Total commandé
               </td>
               <td className="px-4 py-2 text-right font-semibold text-slate-900 dark:text-slate-100">{formatAmount(total)} Ar</td>

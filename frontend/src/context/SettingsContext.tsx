@@ -9,6 +9,7 @@ const defaultSettings: ClinicSettings = {
   address: null,
   phone: null,
   email: null,
+  expiryAlertDays: 90,
   updatedAt: "",
 };
 

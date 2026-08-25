@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
+import { addToBatch, consumeBatchesFefo } from "@/lib/stock-batches";
 
 export async function GET(request: Request) {
   try {
@@ -77,28 +78,46 @@ export async function POST(request: Request) {
         },
       });
 
-      await tx.stockMovement.create({
-        data: {
-          productId: body.productId,
-          locationId: body.fromLocationId,
-          type: "TRANSFER_OUT",
-          quantity: -quantity,
-          referenceType: "StockTransfer",
-          referenceId: createdTransfer.id,
-          createdById: user.sub,
-        },
+      const consumed = await consumeBatchesFefo(tx, {
+        productId: body.productId,
+        locationId: body.fromLocationId,
+        quantity,
       });
-      await tx.stockMovement.create({
-        data: {
+
+      for (const c of consumed) {
+        const sourceBatch = await tx.productBatch.findUniqueOrThrow({ where: { id: c.productBatchId } });
+        const destBatchId = await addToBatch(tx, {
           productId: body.productId,
           locationId: body.toLocationId,
-          type: "TRANSFER_IN",
-          quantity,
-          referenceType: "StockTransfer",
-          referenceId: createdTransfer.id,
-          createdById: user.sub,
-        },
-      });
+          expiryDate: sourceBatch.expiryDate,
+          quantity: c.quantity,
+        });
+
+        await tx.stockMovement.create({
+          data: {
+            productId: body.productId,
+            locationId: body.fromLocationId,
+            type: "TRANSFER_OUT",
+            quantity: -c.quantity,
+            referenceType: "StockTransfer",
+            referenceId: createdTransfer.id,
+            productBatchId: c.productBatchId,
+            createdById: user.sub,
+          },
+        });
+        await tx.stockMovement.create({
+          data: {
+            productId: body.productId,
+            locationId: body.toLocationId,
+            type: "TRANSFER_IN",
+            quantity: c.quantity,
+            referenceType: "StockTransfer",
+            referenceId: createdTransfer.id,
+            productBatchId: destBatchId,
+            createdById: user.sub,
+          },
+        });
+      }
 
       return createdTransfer;
     }, { timeout: 15000 });

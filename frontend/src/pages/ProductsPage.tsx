@@ -53,7 +53,7 @@ export function ProductsPage() {
   const [search, setSearch] = useState("");
 
   const [adjustTarget, setAdjustTarget] = useState<Product | null>(null);
-  const [adjustForm, setAdjustForm] = useState({ locationId: "", quantity: "", note: "" });
+  const [adjustForm, setAdjustForm] = useState({ locationId: "", quantity: "", note: "", expiryDate: "" });
   const [adjustSaving, setAdjustSaving] = useState(false);
 
   const [sellUnitsTargetId, setSellUnitsTargetId] = useState<string | null>(null);
@@ -144,7 +144,7 @@ export function ProductsPage() {
 
   function openAdjust(product: Product) {
     setAdjustTarget(product);
-    setAdjustForm({ locationId: locations[0]?.id ?? "", quantity: "", note: "" });
+    setAdjustForm({ locationId: locations[0]?.id ?? "", quantity: "", note: "", expiryDate: "" });
     setError(null);
   }
 
@@ -158,6 +158,7 @@ export function ProductsPage() {
         locationId: adjustForm.locationId,
         quantity: Number(adjustForm.quantity),
         note: adjustForm.note || null,
+        expiryDate: Number(adjustForm.quantity) > 0 ? adjustForm.expiryDate || undefined : undefined,
       });
       setAdjustTarget(null);
       await load();
@@ -404,6 +405,21 @@ export function ProductsPage() {
               Stock actuel à cet emplacement :{" "}
               {adjustTarget.stocks.find((s) => s.locationId === adjustForm.locationId)?.quantity ?? 0}
             </p>
+            {adjustForm.locationId &&
+              adjustTarget.batches.filter((b) => b.locationId === adjustForm.locationId).length > 0 && (
+                <ul className="rounded-lg border border-slate-200 dark:border-slate-800 text-xs">
+                  {adjustTarget.batches
+                    .filter((b) => b.locationId === adjustForm.locationId)
+                    .map((b) => (
+                      <li key={b.id} className="flex justify-between border-b border-slate-100 dark:border-slate-800 px-3 py-1 last:border-0">
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {b.expiryDate ? `Périme le ${new Date(b.expiryDate).toLocaleDateString()}` : "Sans date de péremption"}
+                        </span>
+                        <span className="font-medium text-slate-700 dark:text-slate-300">{b.quantityRemaining}</span>
+                      </li>
+                    ))}
+                </ul>
+              )}
             <Input
               label="Quantité (positive pour ajouter, négative pour retirer)"
               type="number"
@@ -412,6 +428,14 @@ export function ProductsPage() {
               value={adjustForm.quantity}
               onChange={(e) => setAdjustForm({ ...adjustForm, quantity: e.target.value })}
             />
+            {Number(adjustForm.quantity) > 0 && (
+              <Input
+                label="Date de péremption (optionnel)"
+                type="date"
+                value={adjustForm.expiryDate}
+                onChange={(e) => setAdjustForm({ ...adjustForm, expiryDate: e.target.value })}
+              />
+            )}
             <Input
               label="Motif (optionnel)"
               placeholder="Ex : stock initial, inventaire, produit périmé…"

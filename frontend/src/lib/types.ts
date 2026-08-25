@@ -47,6 +47,15 @@ export type ProductStock = {
   quantity: number;
 };
 
+export type ProductBatch = {
+  id: string;
+  productId: string;
+  locationId: string;
+  location: Location;
+  expiryDate: string | null;
+  quantityRemaining: number;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -61,6 +70,7 @@ export type Product = {
   isActive: boolean;
   sellUnits: ProductSellUnit[];
   stocks: ProductStock[];
+  batches: ProductBatch[];
 };
 
 export type Animal = {
@@ -153,6 +163,7 @@ export type ClinicSettings = {
   address: string | null;
   phone: string | null;
   email: string | null;
+  expiryAlertDays: number;
   updatedAt: string;
 };
 

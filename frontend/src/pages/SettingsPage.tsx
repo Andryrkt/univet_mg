@@ -4,7 +4,7 @@ import { useSettings } from "../context/SettingsContext";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 
-const emptyForm = { name: "", tagline: "", address: "", phone: "", email: "" };
+const emptyForm = { name: "", tagline: "", address: "", phone: "", email: "", expiryAlertDays: "90" };
 
 export function SettingsPage() {
   const { settings, refresh } = useSettings();
@@ -20,6 +20,7 @@ export function SettingsPage() {
       address: settings.address ?? "",
       phone: settings.phone ?? "",
       email: settings.email ?? "",
+      expiryAlertDays: String(settings.expiryAlertDays),
     });
   }, [settings]);
 
@@ -35,6 +36,7 @@ export function SettingsPage() {
         address: form.address || null,
         phone: form.phone || null,
         email: form.email || null,
+        expiryAlertDays: Number(form.expiryAlertDays),
       });
       await refresh();
       setSuccess(true);
@@ -74,6 +76,14 @@ export function SettingsPage() {
           type="email"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
+        />
+        <Input
+          label="Alerte péremption (jours avant échéance)"
+          type="number"
+          min="1"
+          required
+          value={form.expiryAlertDays}
+          onChange={(e) => setForm({ ...form, expiryAlertDays: e.target.value })}
         />
         <div className="flex justify-end pt-2">
           <Button type="submit" disabled={saving}>

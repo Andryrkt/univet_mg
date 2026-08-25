@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
+import { addToBatch, consumeBatchesFefo } from "@/lib/stock-batches";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -34,16 +35,44 @@ export async function POST(request: Request, { params }: { params: { id: string 
         update: { quantity: resultingQuantity },
       });
 
-      await tx.stockMovement.create({
-        data: {
+      if (quantity > 0) {
+        const productBatchId = await addToBatch(tx, {
           productId: params.id,
           locationId: body.locationId,
-          type: "ADJUSTMENT",
+          expiryDate: body.expiryDate ? new Date(body.expiryDate) : null,
           quantity,
-          note: body.note || null,
-          createdById: user.sub,
-        },
-      });
+        });
+        await tx.stockMovement.create({
+          data: {
+            productId: params.id,
+            locationId: body.locationId,
+            type: "ADJUSTMENT",
+            quantity,
+            note: body.note || null,
+            productBatchId,
+            createdById: user.sub,
+          },
+        });
+      } else {
+        const consumed = await consumeBatchesFefo(tx, {
+          productId: params.id,
+          locationId: body.locationId,
+          quantity: -quantity,
+        });
+        for (const c of consumed) {
+          await tx.stockMovement.create({
+            data: {
+              productId: params.id,
+              locationId: body.locationId,
+              type: "ADJUSTMENT",
+              quantity: -c.quantity,
+              note: body.note || null,
+              productBatchId: c.productBatchId,
+              createdById: user.sub,
+            },
+          });
+        }
+      }
 
       return tx.product.findUnique({
         where: { id: params.id },
@@ -52,6 +81,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
           unit: true,
           sellUnits: { include: { unit: true } },
           stocks: { include: { location: true } },
+          batches: { where: { quantityRemaining: { gt: 0 } }, include: { location: true }, orderBy: { expiryDate: "asc" } },
         },
       });
     }, { timeout: 15000 });

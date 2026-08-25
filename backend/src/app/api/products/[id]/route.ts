@@ -19,7 +19,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         alertThreshold: body.alertThreshold,
         isActive: body.isActive,
       },
-      include: { category: true, unit: true, sellUnits: { include: { unit: true } }, stocks: { include: { location: true } } },
+      include: {
+        category: true,
+        unit: true,
+        sellUnits: { include: { unit: true } },
+        stocks: { include: { location: true } },
+        batches: { where: { quantityRemaining: { gt: 0 } }, include: { location: true }, orderBy: { expiryDate: "asc" } },
+      },
     });
     return NextResponse.json(product);
   } catch (error) {

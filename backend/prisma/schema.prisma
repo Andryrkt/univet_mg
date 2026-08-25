@@ -70,6 +70,7 @@ model Location {
   stockMovements StockMovement[]
   transfersFrom  StockTransfer[] @relation("TransferFrom")
   transfersTo    StockTransfer[] @relation("TransferTo")
+  batches        ProductBatch[]
 }
 
 model Unit {
@@ -127,6 +128,23 @@ model Product {
   sellUnits          ProductSellUnit[]
   stocks             ProductStock[]
   stockTransfers     StockTransfer[]
+  batches            ProductBatch[]
+}
+
+// Lot reçu à une date de péremption donnée, à un emplacement donné. Permet le
+// suivi FEFO (first-expire-first-out) : les ventes/sorties de stock consomment
+// en priorité les lots dont la péremption est la plus proche.
+model ProductBatch {
+  id                String    @id @default(cuid())
+  productId         String
+  product           Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locationId        String
+  location          Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  expiryDate        DateTime?
+  quantityRemaining Int
+  createdAt         DateTime  @default(now())
+
+  stockMovements StockMovement[]
 }
 
 // Quantité en stock d'un produit à un emplacement donné (unité de stock du produit).
@@ -267,6 +285,8 @@ model StockMovement {
   referenceType String?
   referenceId   String?
   note          String?
+  productBatchId String?
+  productBatch   ProductBatch?     @relation(fields: [productBatchId], references: [id])
   createdById   String
   createdBy     User               @relation(fields: [createdById], references: [id])
   createdAt     DateTime           @default(now())
@@ -292,11 +312,12 @@ model StockTransfer {
 // Ligne unique (singleton, id fixe) : informations du cabinet affichées dans
 // l'interface et sur les documents imprimés (bons de commande/réception).
 model ClinicSettings {
-  id        String   @id @default("singleton")
-  name      String   @default("Univet MG")
-  tagline   String?  @default("Cabinet vétérinaire — Gestion de stock & ventes")
-  address   String?
-  phone     String?
-  email     String?
-  updatedAt DateTime @updatedAt
+  id              String   @id @default("singleton")
+  name            String   @default("Univet MG")
+  tagline         String?  @default("Cabinet vétérinaire — Gestion de stock & ventes")
+  address         String?
+  phone           String?
+  email           String?
+  expiryAlertDays Int      @default(90)
+  updatedAt       DateTime @updatedAt
 }

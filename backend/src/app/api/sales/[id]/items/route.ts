@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
+import { consumeBatchesFefo } from "@/lib/stock-batches";
 
 type SaleItemInput = { productId: string; quantity: number; sellUnitId?: string };
 
@@ -137,17 +138,25 @@ export async function POST(request: Request, { params }: { params: { id: string 
           data: { quantity: { decrement: update.baseQuantity } },
         });
 
-        await tx.stockMovement.create({
-          data: {
-            productId: update.productId,
-            locationId: existingSale.locationId,
-            type: "SALE",
-            quantity: -update.baseQuantity,
-            referenceType: "Sale",
-            referenceId: updatedSale.id,
-            createdById: user.sub,
-          },
+        const consumed = await consumeBatchesFefo(tx, {
+          productId: update.productId,
+          locationId: existingSale.locationId,
+          quantity: update.baseQuantity,
         });
+        for (const c of consumed) {
+          await tx.stockMovement.create({
+            data: {
+              productId: update.productId,
+              locationId: existingSale.locationId,
+              type: "SALE",
+              quantity: -c.quantity,
+              referenceType: "Sale",
+              referenceId: updatedSale.id,
+              productBatchId: c.productBatchId,
+              createdById: user.sub,
+            },
+          });
+        }
       }
 
       return updatedSale;

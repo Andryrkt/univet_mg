@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
+import { restoreBatch } from "@/lib/stock-batches";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -25,6 +26,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
           where: { productId_locationId: { productId: m.productId, locationId: m.locationId } },
           data: { quantity: { increment: -m.quantity } },
         });
+        if (m.productBatchId) {
+          await restoreBatch(tx, m.productBatchId, -m.quantity);
+        }
         await tx.stockMovement.create({
           data: {
             productId: m.productId,
@@ -33,6 +37,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
             quantity: -m.quantity,
             referenceType: "Sale",
             referenceId: existing.id,
+            productBatchId: m.productBatchId,
             createdById: user.sub,
           },
         });
