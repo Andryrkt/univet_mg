@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSettings } from "../../context/SettingsContext";
+import { ThemeToggle } from "../ui/ThemeToggle";
 import type { Role } from "../../lib/types";
 
 type NavItem = { to: string; label: string; roles?: Role[]; end?: boolean };
@@ -70,16 +71,16 @@ export function AppLayout() {
     .filter((group) => group.items.length > 0);
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <aside className="w-64 shrink-0 overflow-y-auto border-r border-slate-200 bg-white">
-        <div className="border-b border-slate-200 px-4 py-4">
-          <p className="text-lg font-bold text-slate-900">{settings.name}</p>
-          {settings.tagline && <p className="text-xs text-slate-500">{settings.tagline}</p>}
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
+      <aside className="w-64 shrink-0 overflow-y-auto border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="border-b border-slate-200 dark:border-slate-800 px-4 py-4">
+          <p className="text-lg font-bold text-slate-900 dark:text-slate-100">{settings.name}</p>
+          {settings.tagline && <p className="text-xs text-slate-500 dark:text-slate-400">{settings.tagline}</p>}
         </div>
         <nav className="flex flex-col gap-4 p-3">
           {groups.map((group) => (
             <div key={group.label}>
-              <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{group.label}</p>
+              <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{group.label}</p>
               <div className="flex flex-col gap-1">
                 {group.items.map((item) => (
                   <NavLink
@@ -88,7 +89,9 @@ export function AppLayout() {
                     end={item.end}
                     className={({ isActive }) =>
                       `rounded-lg px-3 py-2 text-sm font-medium ${
-                        isActive ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+                        isActive
+                          ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                          : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`
                     }
                   >
@@ -102,12 +105,13 @@ export function AppLayout() {
       </aside>
 
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-end border-b border-slate-200 bg-white px-6 py-3">
+        <header className="flex items-center justify-end border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3">
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-slate-600">
+            <ThemeToggle />
+            <span className="text-slate-600 dark:text-slate-400">
               {user.name} · <span className="font-medium">{user.role}</span>
             </span>
-            <button onClick={() => logout()} className="text-slate-400 hover:text-red-600">
+            <button onClick={() => logout()} className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400">
               Déconnexion
             </button>
           </div>

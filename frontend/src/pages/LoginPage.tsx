@@ -5,6 +5,7 @@ import { useSettings } from "../context/SettingsContext";
 import { ApiError } from "../lib/api";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { ThemeToggle } from "../components/ui/ThemeToggle";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -30,14 +31,17 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-xl bg-white p-8 shadow-lg">
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-xl bg-white dark:bg-slate-900 p-8 shadow-lg">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">{settings.name}</h1>
-          <p className="text-sm text-slate-500">Connexion à l'espace de gestion</p>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{settings.name}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Connexion à l'espace de gestion</p>
         </div>
 
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
         <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         <Input

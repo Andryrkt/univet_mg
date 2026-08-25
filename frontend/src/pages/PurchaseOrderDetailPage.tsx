@@ -99,21 +99,21 @@ export function PurchaseOrderDetailPage() {
     }
   }
 
-  if (loading) return <p className="text-slate-400">Chargement…</p>;
-  if (!order) return <p className="text-red-600">Commande introuvable</p>;
+  if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
+  if (!order) return <p className="text-red-600 dark:text-red-400">Commande introuvable</p>;
 
   const total = order.items.reduce((sum, item) => sum + Number(item.unitPrice) * item.quantityOrdered, 0);
 
   return (
     <div className="space-y-4">
-      <button onClick={() => navigate("/commandes")} className="text-sm text-slate-500 hover:text-slate-900">
+      <button onClick={() => navigate("/commandes")} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
         ← Retour
       </button>
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">Commande — {order.supplier.name}</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Commande — {order.supplier.name}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Pour <span className="font-medium">{order.location.name}</span> · Créée le{" "}
             {new Date(order.orderDate).toLocaleDateString()} par {order.createdBy.name} ·{" "}
             <span className="font-medium">{statusLabel[order.status]}</span>
@@ -141,30 +141,30 @@ export function PurchaseOrderDetailPage() {
         </div>
       </div>
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+          <thead className="bg-slate-50 dark:bg-slate-950">
             <tr>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Produit</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Commandé</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">PU</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Déjà reçu</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Reste</th>
-              {canReceive && <th className="px-4 py-2 text-right font-medium text-slate-600">À réceptionner</th>}
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Produit</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Commandé</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">PU</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Déjà reçu</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Reste</th>
+              {canReceive && <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">À réceptionner</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {order.items.map((item) => {
               const remaining = item.quantityOrdered - item.quantityReceived;
               return (
                 <tr key={item.id}>
-                  <td className="px-4 py-2 text-slate-700">{item.product.name}</td>
-                  <td className="px-4 py-2 text-right text-slate-700">{item.quantityOrdered}</td>
-                  <td className="px-4 py-2 text-right text-slate-700">{Number(item.unitPrice).toFixed(2)}</td>
-                  <td className="px-4 py-2 text-right text-slate-700">{item.quantityReceived}</td>
-                  <td className="px-4 py-2 text-right text-slate-700">{remaining}</td>
+                  <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{item.product.name}</td>
+                  <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{item.quantityOrdered}</td>
+                  <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{Number(item.unitPrice).toFixed(2)}</td>
+                  <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{item.quantityReceived}</td>
+                  <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{remaining}</td>
                   {canReceive && (
                     <td className="px-4 py-2 text-right">
                       {remaining > 0 ? (
@@ -177,7 +177,7 @@ export function PurchaseOrderDetailPage() {
                           onChange={(e) => setReceiveNow((prev) => ({ ...prev, [item.id]: e.target.value }))}
                         />
                       ) : (
-                        <span className="text-slate-400">—</span>
+                        <span className="text-slate-400 dark:text-slate-500">—</span>
                       )}
                     </td>
                   )}
@@ -187,25 +187,25 @@ export function PurchaseOrderDetailPage() {
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={canReceive ? 5 : 4} className="px-4 py-2 text-right font-medium text-slate-600">
+              <td colSpan={canReceive ? 5 : 4} className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">
                 Total commandé
               </td>
-              <td className="px-4 py-2 text-right font-semibold text-slate-900">{total.toFixed(2)} Ar</td>
+              <td className="px-4 py-2 text-right font-semibold text-slate-900 dark:text-slate-100">{total.toFixed(2)} Ar</td>
             </tr>
           </tfoot>
         </table>
       </div>
 
       {receptions.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <h2 className="mb-3 font-semibold text-slate-900">Historique des réceptions</h2>
-          <ul className="divide-y divide-slate-100">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <h2 className="mb-3 font-semibold text-slate-900 dark:text-slate-100">Historique des réceptions</h2>
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {receptions.map((batch) => (
               <li key={batch.createdAt} className="flex items-center justify-between py-2 text-sm">
                 <div>
-                  <span className="text-slate-700">{new Date(batch.createdAt).toLocaleString()}</span>
-                  <span className="text-slate-400"> · {batch.createdBy.name} · </span>
-                  <span className="text-slate-600">
+                  <span className="text-slate-700 dark:text-slate-300">{new Date(batch.createdAt).toLocaleString()}</span>
+                  <span className="text-slate-400 dark:text-slate-500"> · {batch.createdBy.name} · </span>
+                  <span className="text-slate-600 dark:text-slate-400">
                     {batch.lines.map((l) => `${l.quantity} ${l.unitLabel} ${l.productName}`).join(", ")}
                   </span>
                 </div>
@@ -213,7 +213,7 @@ export function PurchaseOrderDetailPage() {
                   to={`/commandes/${order.id}/reception/imprimer?at=${encodeURIComponent(batch.createdAt)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 text-sm text-slate-500 hover:text-slate-900"
+                  className="shrink-0 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                 >
                   Imprimer le bon de réception
                 </Link>

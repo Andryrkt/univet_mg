@@ -51,35 +51,35 @@ export function ClientDetailPage() {
     }
   }
 
-  if (loading) return <p className="text-slate-400">Chargement…</p>;
-  if (!client) return <p className="text-red-600">Client introuvable</p>;
+  if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
+  if (!client) return <p className="text-red-600 dark:text-red-400">Client introuvable</p>;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">{client.name}</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{client.name}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           {client.phone}
           {client.email ? ` · ${client.email}` : ""}
           {client.address ? ` · ${client.address}` : ""}
         </p>
       </div>
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900">Animaux</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Animaux</h2>
           <Button onClick={() => setModalOpen(true)}>+ Ajouter un animal</Button>
         </div>
         {client.animals.length === 0 ? (
-          <p className="text-sm text-slate-400">Aucun animal enregistré.</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">Aucun animal enregistré.</p>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {client.animals.map((a) => (
               <li key={a.id} className="py-2 text-sm">
-                <span className="font-medium text-slate-800">{a.name}</span>
-                <span className="text-slate-500">
+                <span className="font-medium text-slate-800 dark:text-slate-200">{a.name}</span>
+                <span className="text-slate-500 dark:text-slate-400">
                   {" "}
                   — {a.species}
                   {a.breed ? ` (${a.breed})` : ""}
@@ -90,16 +90,16 @@ export function ClientDetailPage() {
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <h2 className="mb-3 font-semibold text-slate-900">Historique des achats</h2>
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+        <h2 className="mb-3 font-semibold text-slate-900 dark:text-slate-100">Historique des achats</h2>
         {client.sales.length === 0 ? (
-          <p className="text-sm text-slate-400">Aucun achat enregistré.</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">Aucun achat enregistré.</p>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {client.sales.map((s) => (
               <li key={s.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-slate-700">{new Date(s.createdAt).toLocaleString()}</span>
-                <span className="font-medium text-slate-900">{Number(s.totalAmount).toFixed(2)} Ar</span>
+                <span className="text-slate-700 dark:text-slate-300">{new Date(s.createdAt).toLocaleString()}</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">{Number(s.totalAmount).toFixed(2)} Ar</span>
               </li>
             ))}
           </ul>

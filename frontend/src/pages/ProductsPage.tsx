@@ -200,70 +200,70 @@ export function ProductsPage() {
     }
   }
 
-  if (loading) return <p className="text-slate-400">Chargement…</p>;
+  if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
   const sellUnitsTarget = products.find((p) => p.id === sellUnitsTargetId) ?? null;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Produits</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Produits</h1>
         {canWrite && <Button onClick={openCreate}>+ Ajouter</Button>}
       </div>
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+          <thead className="bg-slate-50 dark:bg-slate-950">
             <tr>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Nom</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Catégorie</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Unité</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Prix achat</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Prix vente</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Stock total</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Nom</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Catégorie</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Unité</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Prix achat</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Prix vente</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Stock total</th>
               {canWrite && <th className="px-4 py-2" />}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {products.map((p) => (
               <tr key={p.id} className={!p.isActive ? "opacity-40" : ""}>
-                <td className="px-4 py-2 text-slate-700">
+                <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
                   {p.name}
-                  {p.sku ? <span className="ml-1 text-xs text-slate-400">({p.sku})</span> : null}
+                  {p.sku ? <span className="ml-1 text-xs text-slate-400 dark:text-slate-500">({p.sku})</span> : null}
                 </td>
-                <td className="px-4 py-2 text-slate-700">
-                  <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-600">
+                <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
+                  <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-600 dark:text-slate-400">
                     {p.category.code}
                   </span>{" "}
                   {p.category.name}
                 </td>
-                <td className="px-4 py-2 text-slate-700">{p.unit.name}</td>
-                <td className="px-4 py-2 text-right text-slate-700">{Number(p.purchasePrice).toFixed(2)}</td>
-                <td className="px-4 py-2 text-right text-slate-700">{Number(p.sellingPrice).toFixed(2)}</td>
+                <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{p.unit.name}</td>
+                <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{Number(p.purchasePrice).toFixed(2)}</td>
+                <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{Number(p.sellingPrice).toFixed(2)}</td>
                 <td
                   className={`px-4 py-2 text-right font-medium ${
-                    totalStock(p) <= p.alertThreshold ? "text-red-600" : "text-slate-700"
+                    totalStock(p) <= p.alertThreshold ? "text-red-600 dark:text-red-400" : "text-slate-700 dark:text-slate-300"
                   }`}
                 >
                   {totalStock(p)}
                 </td>
                 {canWrite && (
                   <td className="space-x-2 px-4 py-2 text-right">
-                    <button onClick={() => openSellUnits(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                    <button onClick={() => openSellUnits(p)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
                       Unités de vente
                     </button>
-                    <button onClick={() => openAdjust(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                    <button onClick={() => openAdjust(p)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
                       Ajuster stock
                     </button>
-                    <button onClick={() => openEdit(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                    <button onClick={() => openEdit(p)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
                       Modifier
                     </button>
                     {p.isActive && (
                       <button
                         onClick={() => handleDeactivate(p)}
-                        className="text-sm text-red-500 hover:text-red-700"
+                        className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                       >
                         Désactiver
                       </button>
@@ -353,11 +353,11 @@ export function ProductsPage() {
         {adjustTarget && (
           <form onSubmit={handleAdjustSubmit} className="space-y-3">
             {adjustTarget.stocks.length > 0 && (
-              <ul className="rounded-lg border border-slate-200 text-sm">
+              <ul className="rounded-lg border border-slate-200 dark:border-slate-800 text-sm">
                 {adjustTarget.stocks.map((s) => (
-                  <li key={s.id} className="flex justify-between border-b border-slate-100 px-3 py-1 last:border-0">
-                    <span className="text-slate-600">{s.location.name}</span>
-                    <span className="font-medium text-slate-800">{s.quantity}</span>
+                  <li key={s.id} className="flex justify-between border-b border-slate-100 dark:border-slate-800 px-3 py-1 last:border-0">
+                    <span className="text-slate-600 dark:text-slate-400">{s.location.name}</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{s.quantity}</span>
                   </li>
                 ))}
               </ul>
@@ -375,7 +375,7 @@ export function ProductsPage() {
                 </option>
               ))}
             </Select>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Stock actuel à cet emplacement :{" "}
               {adjustTarget.stocks.find((s) => s.locationId === adjustForm.locationId)?.quantity ?? 0}
             </p>
@@ -412,20 +412,20 @@ export function ProductsPage() {
       >
         {sellUnitsTarget && (
           <div className="space-y-4">
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Unité de stock : <span className="font-medium">{sellUnitsTarget.unit.name}</span> — prix de base{" "}
               {Number(sellUnitsTarget.sellingPrice).toFixed(2)} Ar / {sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name}
             </p>
 
             {sellUnitsTarget.sellUnits.length > 0 && (
-              <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+              <ul className="divide-y divide-slate-100 dark:divide-slate-800 rounded-lg border border-slate-200 dark:border-slate-800">
                 {sellUnitsTarget.sellUnits.map((su) => (
                   <li key={su.id} className="flex items-center justify-between px-3 py-2 text-sm">
-                    <span className="text-slate-700">
+                    <span className="text-slate-700 dark:text-slate-300">
                       {su.unit.name} = {su.conversionFactor} {sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name} —{" "}
                       {Number(su.sellingPrice).toFixed(2)} Ar
                     </span>
-                    <button onClick={() => handleDeleteSellUnit(su.id)} className="text-sm text-red-500 hover:text-red-700">
+                    <button onClick={() => handleDeleteSellUnit(su.id)} className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
                       Supprimer
                     </button>
                   </li>
@@ -433,8 +433,8 @@ export function ProductsPage() {
               </ul>
             )}
 
-            <form onSubmit={handleAddSellUnit} className="space-y-3 border-t border-slate-200 pt-4">
-              <p className="text-sm font-medium text-slate-700">Ajouter une unité de vente</p>
+            <form onSubmit={handleAddSellUnit} className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Ajouter une unité de vente</p>
               <Select
                 label="Unité"
                 required

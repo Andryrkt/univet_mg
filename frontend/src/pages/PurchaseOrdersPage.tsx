@@ -17,10 +17,10 @@ const statusLabel: Record<PurchaseOrder["status"], string> = {
 };
 
 const statusColor: Record<PurchaseOrder["status"], string> = {
-  PENDING: "bg-amber-100 text-amber-700",
-  PARTIALLY_RECEIVED: "bg-blue-100 text-blue-700",
-  RECEIVED: "bg-green-100 text-green-700",
-  CANCELLED: "bg-slate-100 text-slate-500",
+  PENDING: "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300",
+  PARTIALLY_RECEIVED: "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300",
+  RECEIVED: "bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-300",
+  CANCELLED: "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400",
 };
 
 export function PurchaseOrdersPage() {
@@ -101,32 +101,32 @@ export function PurchaseOrdersPage() {
     }
   }
 
-  if (loading) return <p className="text-slate-400">Chargement…</p>;
+  if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Commandes fournisseurs</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Commandes fournisseurs</h1>
         <Button onClick={() => setModalOpen(true)}>+ Nouvelle commande</Button>
       </div>
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+          <thead className="bg-slate-50 dark:bg-slate-950">
             <tr>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Fournisseur</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Emplacement</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Date</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Statut</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Lignes</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Fournisseur</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Emplacement</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Date</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Statut</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Lignes</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                   Aucune commande
                 </td>
               </tr>
@@ -134,18 +134,18 @@ export function PurchaseOrdersPage() {
               orders.map((o) => (
                 <tr key={o.id}>
                   <td className="px-4 py-2">
-                    <Link to={`/commandes/${o.id}`} className="font-medium text-slate-900 hover:underline">
+                    <Link to={`/commandes/${o.id}`} className="font-medium text-slate-900 dark:text-slate-100 hover:underline">
                       {o.supplier.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 text-slate-700">{o.location.name}</td>
-                  <td className="px-4 py-2 text-slate-700">{new Date(o.orderDate).toLocaleDateString()}</td>
+                  <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{o.location.name}</td>
+                  <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{new Date(o.orderDate).toLocaleDateString()}</td>
                   <td className="px-4 py-2">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColor[o.status]}`}>
                       {statusLabel[o.status]}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-right text-slate-700">{o.items.length}</td>
+                  <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{o.items.length}</td>
                 </tr>
               ))
             )}
@@ -179,7 +179,7 @@ export function PurchaseOrdersPage() {
           </Select>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-slate-700">Lignes de commande</p>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Lignes de commande</p>
             {lines.map((line, i) => (
               <div key={i} className="grid grid-cols-[1fr_70px_80px_auto] items-center gap-2">
                 <Select value={line.productId} onChange={(e) => updateLine(i, { productId: e.target.value })} required>
@@ -211,13 +211,13 @@ export function PurchaseOrdersPage() {
                   type="button"
                   onClick={() => removeLine(i)}
                   disabled={lines.length === 1}
-                  className="text-sm text-red-500 hover:text-red-700 disabled:opacity-30"
+                  className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-30"
                 >
                   ✕
                 </button>
               </div>
             ))}
-            <button type="button" onClick={addLine} className="text-sm text-slate-500 hover:text-slate-900">
+            <button type="button" onClick={addLine} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
               + Ajouter une ligne
             </button>
           </div>

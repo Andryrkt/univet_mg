@@ -100,34 +100,34 @@ export function SimpleCrudPage<T extends { id: string }>({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">{title}</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h1>
         {canWrite && <Button onClick={openCreate}>+ Ajouter</Button>}
       </div>
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+          <thead className="bg-slate-50 dark:bg-slate-950">
             <tr>
               {columns.map((c) => (
-                <th key={c.key} className="px-4 py-2 text-left font-medium text-slate-600">
+                <th key={c.key} className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">
                   {c.label}
                 </th>
               ))}
               {canWrite && <th className="px-4 py-2" />}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {loading ? (
               <tr>
-                <td colSpan={columns.length + 1} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={columns.length + 1} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                   Chargement…
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + 1} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={columns.length + 1} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                   Aucun élément
                 </td>
               </tr>
@@ -135,16 +135,16 @@ export function SimpleCrudPage<T extends { id: string }>({
               items.map((item) => (
                 <tr key={item.id}>
                   {columns.map((c) => (
-                    <td key={c.key} className="px-4 py-2 text-slate-700">
+                    <td key={c.key} className="px-4 py-2 text-slate-700 dark:text-slate-300">
                       {c.render ? c.render(item) : String((item as Record<string, unknown>)[c.key] ?? "")}
                     </td>
                   ))}
                   {canWrite && (
                     <td className="space-x-2 px-4 py-2 text-right">
-                      <button onClick={() => openEdit(item)} className="text-sm text-slate-500 hover:text-slate-900">
+                      <button onClick={() => openEdit(item)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
                         Modifier
                       </button>
-                      <button onClick={() => handleDelete(item)} className="text-sm text-red-500 hover:text-red-700">
+                      <button onClick={() => handleDelete(item)} className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
                         Supprimer
                       </button>
                     </td>

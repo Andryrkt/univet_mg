@@ -12,7 +12,7 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="flex min-h-screen items-center justify-center text-slate-400">Chargement…</div>;
+    return <div className="flex min-h-screen items-center justify-center text-slate-400 dark:text-slate-500">Chargement…</div>;
   }
 
   if (!user) {
@@ -22,7 +22,7 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
   if (roles && !roles.includes(user.role)) {
     return (
       <div className="p-6">
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
           Accès refusé : vous n'avez pas les droits nécessaires pour accéder à cette page.
         </p>
       </div>

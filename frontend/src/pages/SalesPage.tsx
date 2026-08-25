@@ -125,12 +125,12 @@ export function SalesPage() {
     }
   }
 
-  if (loading) return <p className="text-slate-400">Chargement…</p>;
+  if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
-        <h1 className="text-xl font-semibold text-slate-900">Point de vente</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Point de vente</h1>
         <Select label="Emplacement" required value={locationId} onChange={(e) => changeLocation(e.target.value)}>
           <option value="">Sélectionner…</option>
           {locations.map((l) => (
@@ -148,21 +148,21 @@ export function SalesPage() {
           ))}
         </Select>
 
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead className="bg-slate-50">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+            <thead className="bg-slate-50 dark:bg-slate-950">
               <tr>
-                <th className="px-4 py-2 text-left font-medium text-slate-600">Produit</th>
-                <th className="px-4 py-2 text-right font-medium text-slate-600">PU</th>
-                <th className="px-4 py-2 text-right font-medium text-slate-600">Qté</th>
-                <th className="px-4 py-2 text-right font-medium text-slate-600">Sous-total</th>
+                <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Produit</th>
+                <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">PU</th>
+                <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Qté</th>
+                <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Sous-total</th>
                 <th className="px-4 py-2" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {cart.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                  <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                     Panier vide
                   </td>
                 </tr>
@@ -172,10 +172,10 @@ export function SalesPage() {
                   if (!option) return null;
                   return (
                     <tr key={line.key}>
-                      <td className="px-4 py-2 text-slate-700">
-                        {option.productName} <span className="text-xs text-slate-400">({option.unitLabel})</span>
+                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
+                        {option.productName} <span className="text-xs text-slate-400 dark:text-slate-500">({option.unitLabel})</span>
                       </td>
-                      <td className="px-4 py-2 text-right text-slate-700">{option.unitPrice.toFixed(2)}</td>
+                      <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{option.unitPrice.toFixed(2)}</td>
                       <td className="px-4 py-2 text-right">
                         <input
                           type="number"
@@ -183,14 +183,14 @@ export function SalesPage() {
                           max={option.maxQuantity}
                           value={line.quantity}
                           onChange={(e) => updateQuantity(line.key, Number(e.target.value))}
-                          className="w-16 rounded border border-slate-300 px-2 py-1 text-right text-sm"
+                          className="w-16 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-right text-sm text-slate-900 dark:text-slate-100"
                         />
                       </td>
-                      <td className="px-4 py-2 text-right text-slate-700">
+                      <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">
                         {(option.unitPrice * line.quantity).toFixed(2)}
                       </td>
                       <td className="px-4 py-2 text-right">
-                        <button onClick={() => removeLine(line.key)} className="text-sm text-red-500 hover:text-red-700">
+                        <button onClick={() => removeLine(line.key)} className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
                           ✕
                         </button>
                       </td>
@@ -204,8 +204,8 @@ export function SalesPage() {
       </div>
 
       <div className="space-y-4">
-        <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-          <h2 className="font-semibold text-slate-900">Client</h2>
+        <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Client</h2>
           <Select label="Client" required value={clientId} onChange={(e) => setClientId(e.target.value)}>
             <option value="">Sélectionner…</option>
             {clients.map((c) => (
@@ -216,12 +216,12 @@ export function SalesPage() {
           </Select>
         </div>
 
-        <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
-          <div className="flex items-center justify-between text-lg font-semibold text-slate-900">
+        <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+          <div className="flex items-center justify-between text-lg font-semibold text-slate-900 dark:text-slate-100">
             <span>Total</span>
             <span>{total.toFixed(2)} Ar</span>
           </div>
-          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
           <Button className="w-full" onClick={handleSubmit} disabled={saving || !clientId || !locationId || cart.length === 0}>
             {saving ? "Validation…" : "Valider la vente"}
           </Button>

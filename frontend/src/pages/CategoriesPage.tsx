@@ -89,7 +89,7 @@ export function CategoriesPage() {
     }
   }
 
-  if (loading) return <p className="text-slate-400">Chargement…</p>;
+  if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
   const tree = buildCategoryTree(categories);
   const excludedIds = editing ? new Set([editing.id, ...collectCategoryDescendantIds(categories, editing.id)]) : new Set<string>();
@@ -98,51 +98,51 @@ export function CategoriesPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Catégories</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Catégories</h1>
         {canWrite && <Button onClick={() => openCreate()}>+ Ajouter</Button>}
       </div>
 
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead className="bg-slate-50">
+      <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+          <thead className="bg-slate-50 dark:bg-slate-950">
             <tr>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Nom</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Code</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600">Description</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Nom</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Code</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Description</th>
               {canWrite && <th className="px-4 py-2" />}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {tree.length === 0 ? (
               <tr>
-                <td colSpan={canWrite ? 4 : 3} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={canWrite ? 4 : 3} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                   Aucune catégorie
                 </td>
               </tr>
             ) : (
               tree.map((c) => (
                 <tr key={c.id}>
-                  <td className="py-2 pr-4 text-slate-700" style={{ paddingLeft: `${1 + c.depth * 1.5}rem` }}>
-                    {c.depth > 0 && <span className="text-slate-300">└ </span>}
+                  <td className="py-2 pr-4 text-slate-700 dark:text-slate-300" style={{ paddingLeft: `${1 + c.depth * 1.5}rem` }}>
+                    {c.depth > 0 && <span className="text-slate-300 dark:text-slate-600">└ </span>}
                     {c.name}
                   </td>
                   <td className="px-4 py-2">
-                    <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-600">
+                    <span className="rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-600 dark:text-slate-400">
                       {c.code}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-slate-700">{c.description ?? ""}</td>
+                  <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{c.description ?? ""}</td>
                   {canWrite && (
                     <td className="space-x-2 whitespace-nowrap px-4 py-2 text-right">
-                      <button onClick={() => openCreate(c.id)} className="text-sm text-slate-500 hover:text-slate-900">
+                      <button onClick={() => openCreate(c.id)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
                         + Sous-catégorie
                       </button>
-                      <button onClick={() => openEdit(c)} className="text-sm text-slate-500 hover:text-slate-900">
+                      <button onClick={() => openEdit(c)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
                         Modifier
                       </button>
-                      <button onClick={() => handleDelete(c)} className="text-sm text-red-500 hover:text-red-700">
+                      <button onClick={() => handleDelete(c)} className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
                         Supprimer
                       </button>
                     </td>
