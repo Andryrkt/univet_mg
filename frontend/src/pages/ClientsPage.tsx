@@ -6,6 +6,7 @@ import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
+import { SearchInput } from "../components/ui/SearchInput";
 
 const emptyForm = { name: "", phone: "", email: "", address: "" };
 
@@ -16,6 +17,7 @@ export function ClientsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   async function load() {
     try {
@@ -49,6 +51,13 @@ export function ClientsPage() {
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
+  const filteredClients = search
+    ? clients.filter((c) => {
+        const q = search.toLowerCase();
+        return c.name.toLowerCase().includes(q) || c.phone.toLowerCase().includes(q) || (c.email ?? "").toLowerCase().includes(q);
+      })
+    : clients;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -58,6 +67,8 @@ export function ClientsPage() {
           Ajouter
         </Button>
       </div>
+
+      <SearchInput value={search} onChange={setSearch} className="max-w-sm" />
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -72,14 +83,14 @@ export function ClientsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {clients.length === 0 ? (
+            {filteredClients.length === 0 ? (
               <tr>
                 <td colSpan={4} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  Aucun client
+                  {search ? "Aucun résultat" : "Aucun client"}
                 </td>
               </tr>
             ) : (
-              clients.map((c) => (
+              filteredClients.map((c) => (
                 <tr key={c.id}>
                   <td className="px-4 py-2">
                     <Link to={`/clients/${c.id}`} className="font-medium text-slate-900 dark:text-slate-100 hover:underline">

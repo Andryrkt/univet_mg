@@ -4,6 +4,7 @@ import { api, ApiError } from "../lib/api";
 import type { Sale } from "../lib/types";
 import { Modal } from "../components/ui/Modal";
 import { formatAmount } from "../lib/format";
+import { SearchInput } from "../components/ui/SearchInput";
 
 export function SalesHistoryPage() {
   const [searchParams] = useSearchParams();
@@ -11,6 +12,7 @@ export function SalesHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Sale | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     api
@@ -30,9 +32,23 @@ export function SalesHistoryPage() {
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
+  const filteredSales = search
+    ? sales.filter((s) => {
+        const q = search.toLowerCase();
+        return (
+          s.client.name.toLowerCase().includes(q) ||
+          s.location.name.toLowerCase().includes(q) ||
+          s.seller.name.toLowerCase().includes(q)
+        );
+      })
+    : sales;
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Historique des ventes</h1>
+
+      <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par client, emplacement, vendeur…" className="max-w-sm" />
+
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -47,14 +63,14 @@ export function SalesHistoryPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {sales.length === 0 ? (
+            {filteredSales.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  Aucune vente
+                  {search ? "Aucun résultat" : "Aucune vente"}
                 </td>
               </tr>
             ) : (
-              sales.map((s) => (
+              filteredSales.map((s) => (
                 <tr key={s.id} onClick={() => setSelected(s)} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{new Date(s.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{s.client.name}</td>

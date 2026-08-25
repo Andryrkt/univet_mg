@@ -4,6 +4,7 @@ import type { Location, Product, StockTransfer } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { SearchInput } from "../components/ui/SearchInput";
 
 const emptyForm = { productId: "", fromLocationId: "", toLocationId: "", quantity: "", note: "" };
 
@@ -15,6 +16,7 @@ export function StockTransfersPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   async function load() {
     try {
@@ -62,6 +64,17 @@ export function StockTransfersPage() {
   }
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
+
+  const filteredTransfers = search
+    ? transfers.filter((t) => {
+        const q = search.toLowerCase();
+        return (
+          t.product.name.toLowerCase().includes(q) ||
+          t.fromLocation.name.toLowerCase().includes(q) ||
+          t.toLocation.name.toLowerCase().includes(q)
+        );
+      })
+    : transfers;
 
   return (
     <div className="space-y-6">
@@ -132,6 +145,8 @@ export function StockTransfersPage() {
         </div>
       </form>
 
+      <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par produit, emplacement…" className="max-w-sm" />
+
       <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
           <thead className="bg-slate-50 dark:bg-slate-950">
@@ -145,14 +160,14 @@ export function StockTransfersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {transfers.length === 0 ? (
+            {filteredTransfers.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  Aucun transfert
+                  {search ? "Aucun résultat" : "Aucun transfert"}
                 </td>
               </tr>
             ) : (
-              transfers.map((t) => (
+              filteredTransfers.map((t) => (
                 <tr key={t.id}>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{new Date(t.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{t.product.name}</td>

@@ -5,6 +5,7 @@ import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
+import { SearchInput } from "../components/ui/SearchInput";
 
 const emptyForm = { name: "", address: "", phone: "" };
 
@@ -16,6 +17,7 @@ export function LocationsPage() {
   const [editing, setEditing] = useState<Location | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   async function load() {
     try {
@@ -80,6 +82,13 @@ export function LocationsPage() {
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
+  const filteredLocations = search
+    ? locations.filter((l) => {
+        const q = search.toLowerCase();
+        return l.name.toLowerCase().includes(q) || (l.address ?? "").toLowerCase().includes(q) || (l.phone ?? "").toLowerCase().includes(q);
+      })
+    : locations;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -89,6 +98,8 @@ export function LocationsPage() {
           Ajouter
         </Button>
       </div>
+
+      <SearchInput value={search} onChange={setSearch} className="max-w-sm" />
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -104,14 +115,14 @@ export function LocationsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {locations.length === 0 ? (
+            {filteredLocations.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  Aucun emplacement
+                  {search ? "Aucun résultat" : "Aucun emplacement"}
                 </td>
               </tr>
             ) : (
-              locations.map((l) => (
+              filteredLocations.map((l) => (
                 <tr key={l.id} className={!l.isActive ? "opacity-40" : ""}>
                   <td className="px-4 py-2 font-medium text-slate-800 dark:text-slate-200">{l.name}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{l.address ?? "—"}</td>

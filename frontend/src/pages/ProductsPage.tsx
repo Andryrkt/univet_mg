@@ -9,6 +9,7 @@ import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
+import { SearchInput } from "../components/ui/SearchInput";
 
 function totalStock(product: Product): number {
   return product.stocks.reduce((sum, s) => sum + s.quantity, 0);
@@ -48,6 +49,7 @@ export function ProductsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   const [adjustTarget, setAdjustTarget] = useState<Product | null>(null);
   const [adjustForm, setAdjustForm] = useState({ locationId: "", quantity: "", note: "" });
@@ -206,6 +208,18 @@ export function ProductsPage() {
 
   const sellUnitsTarget = products.find((p) => p.id === sellUnitsTargetId) ?? null;
 
+  const filteredProducts = search
+    ? products.filter((p) => {
+        const q = search.toLowerCase();
+        return (
+          p.name.toLowerCase().includes(q) ||
+          (p.sku ?? "").toLowerCase().includes(q) ||
+          p.category.name.toLowerCase().includes(q) ||
+          p.unit.name.toLowerCase().includes(q)
+        );
+      })
+    : products;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -217,6 +231,8 @@ export function ProductsPage() {
           </Button>
         )}
       </div>
+
+      <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par nom, référence, catégorie…" className="max-w-sm" />
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -234,7 +250,14 @@ export function ProductsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {products.map((p) => (
+            {filteredProducts.length === 0 && (
+              <tr>
+                <td colSpan={canWrite ? 7 : 6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
+                  {search ? "Aucun résultat" : "Aucun produit"}
+                </td>
+              </tr>
+            )}
+            {filteredProducts.map((p) => (
               <tr key={p.id} className={!p.isActive ? "opacity-40" : ""}>
                 <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
                   {p.name}

@@ -6,6 +6,7 @@ import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
+import { SearchInput } from "../components/ui/SearchInput";
 
 const emptyForm = { email: "", password: "", name: "", role: "SELLER" };
 
@@ -16,6 +17,7 @@ export function UsersPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   async function load() {
     try {
@@ -59,6 +61,13 @@ export function UsersPage() {
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
+  const filteredUsers = search
+    ? users.filter((u) => {
+        const q = search.toLowerCase();
+        return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q);
+      })
+    : users;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -68,6 +77,8 @@ export function UsersPage() {
           Ajouter
         </Button>
       </div>
+
+      <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par nom, email, rôle…" className="max-w-sm" />
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -83,7 +94,14 @@ export function UsersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {users.map((u) => (
+            {filteredUsers.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
+                  Aucun résultat
+                </td>
+              </tr>
+            )}
+            {filteredUsers.map((u) => (
               <tr key={u.id} className={!u.isActive ? "opacity-40" : ""}>
                 <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{u.name}</td>
                 <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{u.email}</td>

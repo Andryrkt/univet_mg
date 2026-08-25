@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../lib/api";
 import type { StockMovement } from "../lib/types";
+import { SearchInput } from "../components/ui/SearchInput";
 
 const typeLabel: Record<StockMovement["type"], string> = {
   PURCHASE_RECEPTION: "Réception fournisseur",
@@ -14,6 +15,7 @@ export function StockMovementsPage() {
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     api
@@ -25,9 +27,24 @@ export function StockMovementsPage() {
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
+  const filteredMovements = search
+    ? movements.filter((m) => {
+        const q = search.toLowerCase();
+        return (
+          m.product.name.toLowerCase().includes(q) ||
+          m.location.name.toLowerCase().includes(q) ||
+          typeLabel[m.type].toLowerCase().includes(q) ||
+          m.createdBy.name.toLowerCase().includes(q)
+        );
+      })
+    : movements;
+
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Mouvements de stock</h1>
+
+      <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par produit, emplacement, type…" className="max-w-sm" />
+
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
@@ -43,14 +60,14 @@ export function StockMovementsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {movements.length === 0 ? (
+            {filteredMovements.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  Aucun mouvement
+                  {search ? "Aucun résultat" : "Aucun mouvement"}
                 </td>
               </tr>
             ) : (
-              movements.map((m) => (
+              filteredMovements.map((m) => (
                 <tr key={m.id}>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{new Date(m.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{m.product.name}</td>

@@ -7,6 +7,7 @@ import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
+import { SearchInput } from "../components/ui/SearchInput";
 
 type LineForm = { productId: string; quantityOrdered: string; unitPrice: string };
 
@@ -36,6 +37,7 @@ export function PurchaseOrdersPage() {
   const [locationId, setLocationId] = useState("");
   const [lines, setLines] = useState<LineForm[]>([{ productId: "", quantityOrdered: "", unitPrice: "" }]);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   async function load() {
     try {
@@ -104,6 +106,17 @@ export function PurchaseOrdersPage() {
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
+  const filteredOrders = search
+    ? orders.filter((o) => {
+        const q = search.toLowerCase();
+        return (
+          o.supplier.name.toLowerCase().includes(q) ||
+          o.location.name.toLowerCase().includes(q) ||
+          statusLabel[o.status].toLowerCase().includes(q)
+        );
+      })
+    : orders;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -113,6 +126,8 @@ export function PurchaseOrdersPage() {
           Nouvelle commande
         </Button>
       </div>
+
+      <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par fournisseur, emplacement, statut…" className="max-w-sm" />
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -128,14 +143,14 @@ export function PurchaseOrdersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {orders.length === 0 ? (
+            {filteredOrders.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  Aucune commande
+                  {search ? "Aucun résultat" : "Aucune commande"}
                 </td>
               </tr>
             ) : (
-              orders.map((o) => (
+              filteredOrders.map((o) => (
                 <tr key={o.id}>
                   <td className="px-4 py-2">
                     <Link to={`/commandes/${o.id}`} className="font-medium text-slate-900 dark:text-slate-100 hover:underline">

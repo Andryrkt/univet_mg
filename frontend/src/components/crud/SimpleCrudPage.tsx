@@ -4,6 +4,7 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Modal } from "../ui/Modal";
 import { PlusIcon } from "../ui/icons";
+import { SearchInput } from "../ui/SearchInput";
 
 export type CrudField<T> = {
   name: keyof T & string;
@@ -39,6 +40,7 @@ export function SimpleCrudPage<T extends { id: string }>({
   const [editing, setEditing] = useState<T | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   async function load() {
     setLoading(true);
@@ -98,6 +100,16 @@ export function SimpleCrudPage<T extends { id: string }>({
     }
   }
 
+  const filteredItems = search
+    ? items.filter((item) =>
+        columns.some((c) =>
+          String((item as Record<string, unknown>)[c.key] ?? "")
+            .toLowerCase()
+            .includes(search.toLowerCase())
+        )
+      )
+    : items;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -109,6 +121,8 @@ export function SimpleCrudPage<T extends { id: string }>({
           </Button>
         )}
       </div>
+
+      <SearchInput value={search} onChange={setSearch} className="max-w-sm" />
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -131,14 +145,14 @@ export function SimpleCrudPage<T extends { id: string }>({
                   Chargement…
                 </td>
               </tr>
-            ) : items.length === 0 ? (
+            ) : filteredItems.length === 0 ? (
               <tr>
                 <td colSpan={columns.length + 1} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  Aucun élément
+                  {search ? "Aucun résultat" : "Aucun élément"}
                 </td>
               </tr>
             ) : (
-              items.map((item) => (
+              filteredItems.map((item) => (
                 <tr key={item.id}>
                   {columns.map((c) => (
                     <td key={c.key} className="px-4 py-2 text-slate-700 dark:text-slate-300">

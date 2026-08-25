@@ -8,6 +8,7 @@ import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
+import { SearchInput } from "../components/ui/SearchInput";
 
 const emptyForm = { name: "", code: "", description: "", parentId: "" };
 
@@ -22,6 +23,7 @@ export function CategoriesPage() {
   const [editing, setEditing] = useState<Category | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
 
   async function load() {
     try {
@@ -96,6 +98,24 @@ export function CategoriesPage() {
   const excludedIds = editing ? new Set([editing.id, ...collectCategoryDescendantIds(categories, editing.id)]) : new Set<string>();
   const parentOptions = tree.filter((c) => !excludedIds.has(c.id));
 
+  // Filtre par nom/code, en gardant visible la chaîne des parents jusqu'à la racine.
+  let visibleTree = tree;
+  if (search) {
+    const q = search.toLowerCase();
+    const byId = new Map(categories.map((c) => [c.id, c]));
+    const visibleIds = new Set<string>();
+    for (const c of categories) {
+      if (c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)) {
+        let current: typeof c | undefined = c;
+        while (current) {
+          visibleIds.add(current.id);
+          current = current.parentId ? byId.get(current.parentId) : undefined;
+        }
+      }
+    }
+    visibleTree = tree.filter((c) => visibleIds.has(c.id));
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -107,6 +127,8 @@ export function CategoriesPage() {
           </Button>
         )}
       </div>
+
+      <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par nom ou code…" className="max-w-sm" />
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -121,14 +143,14 @@ export function CategoriesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {tree.length === 0 ? (
+            {visibleTree.length === 0 ? (
               <tr>
                 <td colSpan={canWrite ? 4 : 3} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  Aucune catégorie
+                  {search ? "Aucun résultat" : "Aucune catégorie"}
                 </td>
               </tr>
             ) : (
-              tree.map((c) => (
+              visibleTree.map((c) => (
                 <tr key={c.id}>
                   <td className="py-2 pr-4 text-slate-700 dark:text-slate-300" style={{ paddingLeft: `${1 + c.depth * 1.5}rem` }}>
                     {c.depth > 0 && <span className="text-slate-300 dark:text-slate-600">└ </span>}
