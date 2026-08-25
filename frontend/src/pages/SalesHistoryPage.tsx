@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
 import type { Product, Sale } from "../lib/types";
 import { Modal } from "../components/ui/Modal";
@@ -241,10 +241,30 @@ export function SalesHistoryPage() {
       <Modal open={!!selected} onClose={() => setSelected(null)} title="Détail de la vente">
         {selected && (
           <div className="space-y-3">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              {new Date(selected.createdAt).toLocaleString()} · {selected.client.name} · {selected.location.name} · vendu par{" "}
-              {selected.seller.name}
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {new Date(selected.createdAt).toLocaleString()} · {selected.client.name} · {selected.location.name} · vendu par{" "}
+                {selected.seller.name}
+              </p>
+              <div className="flex shrink-0 gap-3">
+                <Link
+                  to={`/ventes/${selected.id}/imprimer`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                >
+                  Facture
+                </Link>
+                <Link
+                  to={`/ventes/${selected.id}/ticket`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                >
+                  Ticket de caisse
+                </Link>
+              </div>
+            </div>
 
             {selected.cancelledAt && (
               <p className="rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-600 dark:text-slate-400">

@@ -11,6 +11,8 @@ import { PurchaseOrdersPage } from "./pages/PurchaseOrdersPage";
 import { PurchaseOrderDetailPage } from "./pages/PurchaseOrderDetailPage";
 import { PurchaseOrderPrintPage } from "./pages/PurchaseOrderPrintPage";
 import { PurchaseOrderReceptionPrintPage } from "./pages/PurchaseOrderReceptionPrintPage";
+import { SaleReceiptPrintPage } from "./pages/SaleReceiptPrintPage";
+import { SaleTicketPrintPage } from "./pages/SaleTicketPrintPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { SalesPage } from "./pages/SalesPage";
@@ -38,6 +40,22 @@ function App() {
         element={
           <ProtectedRoute roles={["ADMIN", "MODERATOR"]}>
             <PurchaseOrderReceptionPrintPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ventes/:id/imprimer"
+        element={
+          <ProtectedRoute>
+            <SaleReceiptPrintPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ventes/:id/ticket"
+        element={
+          <ProtectedRoute>
+            <SaleTicketPrintPage />
           </ProtectedRoute>
         }
       />
