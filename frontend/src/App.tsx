@@ -18,6 +18,8 @@ import { SalesHistoryPage } from "./pages/SalesHistoryPage";
 import { StockMovementsPage } from "./pages/StockMovementsPage";
 import { UsersPage } from "./pages/UsersPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { LocationsPage } from "./pages/LocationsPage";
+import { StockTransfersPage } from "./pages/StockTransfersPage";
 
 function App() {
   return (
@@ -97,6 +99,22 @@ function App() {
           element={
             <ProtectedRoute roles={["ADMIN", "MODERATOR"]}>
               <StockMovementsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/emplacements"
+          element={
+            <ProtectedRoute roles={["ADMIN", "MODERATOR"]}>
+              <LocationsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transferts-stock"
+          element={
+            <ProtectedRoute roles={["ADMIN", "MODERATOR"]}>
+              <StockTransfersPage />
             </ProtectedRoute>
           }
         />

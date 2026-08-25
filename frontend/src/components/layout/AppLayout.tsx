@@ -17,6 +17,8 @@ const navItems: NavItem[] = [
   { to: "/ventes", label: "Point de vente" },
   { to: "/historique-ventes", label: "Historique des ventes" },
   { to: "/mouvements-stock", label: "Mouvements de stock", roles: ["ADMIN", "MODERATOR"] },
+  { to: "/emplacements", label: "Emplacements", roles: ["ADMIN", "MODERATOR"] },
+  { to: "/transferts-stock", label: "Transferts de stock", roles: ["ADMIN", "MODERATOR"] },
   { to: "/utilisateurs", label: "Utilisateurs", roles: ["ADMIN"] },
   { to: "/parametres", label: "Paramètres", roles: ["ADMIN"] },
 ];

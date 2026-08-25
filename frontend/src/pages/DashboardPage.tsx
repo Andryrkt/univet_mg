@@ -11,6 +11,8 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+type LowStockAlert = { productId: string; productName: string; locationName: string; quantity: number; alertThreshold: number };
+
 export function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -28,7 +30,17 @@ export function DashboardPage() {
   if (loading) return <p className="text-slate-400">Chargement…</p>;
 
   const activeProducts = products.filter((p) => p.isActive);
-  const lowStock = activeProducts.filter((p) => p.stockQuantity <= p.alertThreshold);
+  const lowStock: LowStockAlert[] = activeProducts.flatMap((p) =>
+    p.stocks
+      .filter((s) => s.quantity <= p.alertThreshold)
+      .map((s) => ({
+        productId: p.id,
+        productName: p.name,
+        locationName: s.location.name,
+        quantity: s.quantity,
+        alertThreshold: p.alertThreshold,
+      }))
+  );
   const today = new Date().toDateString();
   const salesToday = sales.filter((s) => new Date(s.createdAt).toDateString() === today);
   const totalToday = salesToday.reduce((sum, s) => sum + Number(s.totalAmount), 0);
@@ -49,11 +61,13 @@ export function DashboardPage() {
           <p className="text-sm text-slate-400">Aucune alerte, tous les stocks sont au-dessus du seuil.</p>
         ) : (
           <ul className="divide-y divide-slate-100">
-            {lowStock.map((p) => (
-              <li key={p.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-slate-700">{p.name}</span>
+            {lowStock.map((a) => (
+              <li key={`${a.productId}-${a.locationName}`} className="flex items-center justify-between py-2 text-sm">
+                <span className="text-slate-700">
+                  {a.productName} <span className="text-slate-400">— {a.locationName}</span>
+                </span>
                 <span className="font-medium text-red-600">
-                  {p.stockQuantity} / seuil {p.alertThreshold}
+                  {a.quantity} / seuil {a.alertThreshold}
                 </span>
               </li>
             ))}

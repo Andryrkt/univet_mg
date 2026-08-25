@@ -40,6 +40,7 @@ export function SalesHistoryPage() {
             <tr>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Date</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Client</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600">Emplacement</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Vendeur</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600">Total</th>
             </tr>
@@ -47,7 +48,7 @@ export function SalesHistoryPage() {
           <tbody className="divide-y divide-slate-100">
             {sales.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
                   Aucune vente
                 </td>
               </tr>
@@ -56,6 +57,7 @@ export function SalesHistoryPage() {
                 <tr key={s.id} onClick={() => setSelected(s)} className="cursor-pointer hover:bg-slate-50">
                   <td className="px-4 py-2 text-slate-700">{new Date(s.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 text-slate-700">{s.client.name}</td>
+                  <td className="px-4 py-2 text-slate-700">{s.location.name}</td>
                   <td className="px-4 py-2 text-slate-700">{s.seller.name}</td>
                   <td className="px-4 py-2 text-right font-medium text-slate-900">
                     {Number(s.totalAmount).toFixed(2)} Ar
@@ -71,7 +73,8 @@ export function SalesHistoryPage() {
         {selected && (
           <div className="space-y-3">
             <p className="text-sm text-slate-500">
-              {new Date(selected.createdAt).toLocaleString()} · {selected.client.name} · vendu par {selected.seller.name}
+              {new Date(selected.createdAt).toLocaleString()} · {selected.client.name} · {selected.location.name} · vendu par{" "}
+              {selected.seller.name}
             </p>
             <ul className="divide-y divide-slate-100 text-sm">
               {selected.items.map((item) => (

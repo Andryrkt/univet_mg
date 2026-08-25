@@ -65,8 +65,10 @@ export function PurchaseOrderPrintPage() {
             {order.supplier.address && <p className="text-sm text-slate-600">{order.supplier.address}</p>}
           </div>
           <div>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Émis par</p>
-            <p className="font-medium text-slate-900">{order.createdBy.name}</p>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Livrer à</p>
+            <p className="font-medium text-slate-900">{order.location.name}</p>
+            {order.location.address && <p className="text-sm text-slate-600">{order.location.address}</p>}
+            <p className="mt-2 text-sm text-slate-500">Émis par {order.createdBy.name}</p>
           </div>
         </div>
 

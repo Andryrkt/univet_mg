@@ -6,6 +6,8 @@ const typeLabel: Record<StockMovement["type"], string> = {
   PURCHASE_RECEPTION: "Réception fournisseur",
   SALE: "Vente",
   ADJUSTMENT: "Ajustement",
+  TRANSFER_OUT: "Transfert (sortie)",
+  TRANSFER_IN: "Transfert (entrée)",
 };
 
 export function StockMovementsPage() {
@@ -34,6 +36,7 @@ export function StockMovementsPage() {
             <tr>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Date</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Produit</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600">Emplacement</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Type</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600">Quantité</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Par</th>
@@ -42,7 +45,7 @@ export function StockMovementsPage() {
           <tbody className="divide-y divide-slate-100">
             {movements.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
                   Aucun mouvement
                 </td>
               </tr>
@@ -51,6 +54,7 @@ export function StockMovementsPage() {
                 <tr key={m.id}>
                   <td className="px-4 py-2 text-slate-700">{new Date(m.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 text-slate-700">{m.product.name}</td>
+                  <td className="px-4 py-2 text-slate-700">{m.location.name}</td>
                   <td className="px-4 py-2 text-slate-700">{typeLabel[m.type]}</td>
                   <td className={`px-4 py-2 text-right font-medium ${m.quantity >= 0 ? "text-green-600" : "text-red-600"}`}>
                     {m.quantity > 0 ? `+${m.quantity}` : m.quantity}

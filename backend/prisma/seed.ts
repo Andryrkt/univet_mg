@@ -23,12 +23,14 @@ async function seedAdmin() {
 
 async function receivePurchaseOrder(
   adminId: string,
+  locationId: string,
   supplierId: string,
   lines: { productId: string; quantity: number; unitPrice: number }[]
 ) {
   const order = await prisma.purchaseOrder.create({
     data: {
       supplierId,
+      locationId,
       status: "RECEIVED",
       receivedAt: new Date(),
       createdById: adminId,
@@ -44,13 +46,15 @@ async function receivePurchaseOrder(
   });
 
   for (const line of lines) {
-    await prisma.product.update({
-      where: { id: line.productId },
-      data: { stockQuantity: { increment: line.quantity } },
+    await prisma.productStock.upsert({
+      where: { productId_locationId: { productId: line.productId, locationId } },
+      create: { productId: line.productId, locationId, quantity: line.quantity },
+      update: { quantity: { increment: line.quantity } },
     });
     await prisma.stockMovement.create({
       data: {
         productId: line.productId,
+        locationId,
         type: "PURCHASE_RECEPTION",
         quantity: line.quantity,
         referenceType: "PurchaseOrder",
@@ -66,6 +70,11 @@ async function seedSampleData(adminId: string) {
   if (unitCount > 0) {
     console.log("Des données existent déjà, données d'exemple ignorées.");
     return;
+  }
+
+  const location = await prisma.location.findFirst();
+  if (!location) {
+    throw new Error("Aucun emplacement trouvé — la migration doit créer l'emplacement par défaut.");
   }
 
   const [boite, comprime, flacon, sachet] = await Promise.all([
@@ -127,19 +136,19 @@ async function seedSampleData(adminId: string) {
       }),
     ]);
 
-  await receivePurchaseOrder(adminId, vetopharma.id, [
+  await receivePurchaseOrder(adminId, location.id, vetopharma.id, [
     { productId: amoxicilline.id, quantity: 200, unitPrice: 300 },
     { productId: serumPhysio.id, quantity: 50, unitPrice: 1500 },
     { productId: vaccinRage.id, quantity: 30, unitPrice: 3500 },
   ]);
 
-  await receivePurchaseOrder(adminId, agrivet.id, [
+  await receivePurchaseOrder(adminId, location.id, agrivet.id, [
     { productId: vermifuge.id, quantity: 40, unitPrice: 2500 },
     { productId: antipuce.id, quantity: 25, unitPrice: 8000 },
     { productId: collier.id, quantity: 30, unitPrice: 4000 },
   ]);
 
-  await receivePurchaseOrder(adminId, zooNutrition.id, [
+  await receivePurchaseOrder(adminId, location.id, zooNutrition.id, [
     { productId: croquettesChien.id, quantity: 20, unitPrice: 15000 },
     { productId: croquettesChat.id, quantity: 20, unitPrice: 9000 },
   ]);
@@ -191,6 +200,7 @@ async function seedSampleData(adminId: string) {
     data: {
       clientId: rakoto.id,
       sellerId: adminId,
+      locationId: location.id,
       totalAmount,
       items: {
         create: saleLines.map((l) => ({
@@ -205,13 +215,14 @@ async function seedSampleData(adminId: string) {
   });
 
   for (const line of saleLines) {
-    await prisma.product.update({
-      where: { id: line.product.id },
-      data: { stockQuantity: { decrement: line.quantity } },
+    await prisma.productStock.update({
+      where: { productId_locationId: { productId: line.product.id, locationId: location.id } },
+      data: { quantity: { decrement: line.quantity } },
     });
     await prisma.stockMovement.create({
       data: {
         productId: line.product.id,
+        locationId: location.id,
         type: "SALE",
         quantity: -line.quantity,
         referenceType: "Sale",

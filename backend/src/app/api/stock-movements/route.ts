@@ -7,11 +7,13 @@ export async function GET(request: Request) {
     await requireRole(request, ["ADMIN", "MODERATOR"]);
     const { searchParams } = new URL(request.url);
     const productId = searchParams.get("productId") ?? undefined;
+    const locationId = searchParams.get("locationId") ?? undefined;
 
     const movements = await prisma.stockMovement.findMany({
-      where: productId ? { productId } : undefined,
+      where: { productId, locationId },
       include: {
         product: true,
+        location: true,
         createdBy: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },

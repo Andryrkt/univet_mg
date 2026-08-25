@@ -43,14 +43,16 @@ export async function POST(request: Request, { params }: { params: { id: string 
           data: { quantityReceived: { increment: delta } },
         });
 
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stockQuantity: { increment: delta } },
+        await tx.productStock.upsert({
+          where: { productId_locationId: { productId: item.productId, locationId: order.locationId } },
+          create: { productId: item.productId, locationId: order.locationId, quantity: delta },
+          update: { quantity: { increment: delta } },
         });
 
         await tx.stockMovement.create({
           data: {
             productId: item.productId,
+            locationId: order.locationId,
             type: "PURCHASE_RECEPTION",
             quantity: delta,
             referenceType: "PurchaseOrder",
@@ -72,7 +74,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return tx.purchaseOrder.update({
         where: { id: order.id },
         data: fullyReceived ? { status: "RECEIVED", receivedAt: new Date() } : { status: "PARTIALLY_RECEIVED" },
-        include: { supplier: true, items: { include: { product: { include: { unit: true } } } } },
+        include: { supplier: true, location: true, items: { include: { product: { include: { unit: true } } } } },
       });
     }, { timeout: 15000 });
 

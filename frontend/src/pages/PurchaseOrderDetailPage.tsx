@@ -114,7 +114,8 @@ export function PurchaseOrderDetailPage() {
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Commande — {order.supplier.name}</h1>
           <p className="text-sm text-slate-500">
-            Créée le {new Date(order.orderDate).toLocaleDateString()} par {order.createdBy.name} ·{" "}
+            Pour <span className="font-medium">{order.location.name}</span> · Créée le{" "}
+            {new Date(order.orderDate).toLocaleDateString()} par {order.createdBy.name} ·{" "}
             <span className="font-medium">{statusLabel[order.status]}</span>
           </p>
         </div>

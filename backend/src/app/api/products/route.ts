@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   try {
     await requireUser(request);
     const products = await prisma.product.findMany({
-      include: { category: true, unit: true, sellUnits: { include: { unit: true } } },
+      include: { category: true, unit: true, sellUnits: { include: { unit: true } }, stocks: { include: { location: true } } },
       orderBy: { name: "asc" },
     });
     return NextResponse.json(products);
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
         sellingPrice: body.sellingPrice,
         alertThreshold: body.alertThreshold ?? 0,
       },
-      include: { category: true, unit: true, sellUnits: { include: { unit: true } } },
+      include: { category: true, unit: true, sellUnits: { include: { unit: true } }, stocks: { include: { location: true } } },
     });
     return NextResponse.json(product, { status: 201 });
   } catch (error) {

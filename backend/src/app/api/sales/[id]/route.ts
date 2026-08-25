@@ -10,6 +10,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       include: {
         client: true,
         seller: { select: { id: true, name: true } },
+        location: true,
         items: { include: { product: true } },
       },
     });

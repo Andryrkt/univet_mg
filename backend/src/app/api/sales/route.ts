@@ -10,6 +10,7 @@ export async function GET(request: Request) {
       include: {
         client: true,
         seller: { select: { id: true, name: true } },
+        location: true,
         items: { include: { product: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -28,8 +29,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const items = body.items as SaleItemInput[] | undefined;
 
-    if (!body.clientId || !items?.length) {
-      return NextResponse.json({ error: "clientId et items sont requis" }, { status: 400 });
+    if (!body.clientId || !body.locationId || !items?.length) {
+      return NextResponse.json({ error: "clientId, locationId et items sont requis" }, { status: 400 });
     }
 
     for (const item of items) {
@@ -73,8 +74,13 @@ export async function POST(request: Request) {
         }
 
         const baseQuantity = item.quantity * conversionFactor;
-        if (product.stockQuantity < baseQuantity) {
-          throw new ApiError(400, `Stock insuffisant pour "${product.name}" (disponible: ${product.stockQuantity})`);
+
+        const stock = await tx.productStock.findUnique({
+          where: { productId_locationId: { productId: item.productId, locationId: body.locationId } },
+        });
+        const availableQuantity = stock?.quantity ?? 0;
+        if (availableQuantity < baseQuantity) {
+          throw new ApiError(400, `Stock insuffisant pour "${product.name}" (disponible: ${availableQuantity})`);
         }
 
         const subtotal = unitPrice.mul(item.quantity);
@@ -93,21 +99,28 @@ export async function POST(request: Request) {
         data: {
           clientId: body.clientId,
           sellerId: user.sub,
+          locationId: body.locationId,
           totalAmount,
           items: { create: saleItemsData },
         },
-        include: { client: true, seller: { select: { id: true, name: true } }, items: { include: { product: true } } },
+        include: {
+          client: true,
+          seller: { select: { id: true, name: true } },
+          location: true,
+          items: { include: { product: true } },
+        },
       });
 
       for (const update of stockUpdates) {
-        await tx.product.update({
-          where: { id: update.productId },
-          data: { stockQuantity: { decrement: update.baseQuantity } },
+        await tx.productStock.update({
+          where: { productId_locationId: { productId: update.productId, locationId: body.locationId } },
+          data: { quantity: { decrement: update.baseQuantity } },
         });
 
         await tx.stockMovement.create({
           data: {
             productId: update.productId,
+            locationId: body.locationId,
             type: "SALE",
             quantity: -update.baseQuantity,
             referenceType: "Sale",

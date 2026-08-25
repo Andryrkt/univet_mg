@@ -8,6 +8,7 @@ export async function GET(request: Request) {
     const orders = await prisma.purchaseOrder.findMany({
       include: {
         supplier: true,
+        location: true,
         createdBy: { select: { id: true, name: true } },
         items: { include: { product: { include: { unit: true } } } },
       },
@@ -31,8 +32,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const items = body.items as PurchaseOrderItemInput[] | undefined;
 
-    if (!body.supplierId || !items?.length) {
-      return NextResponse.json({ error: "supplierId et items sont requis" }, { status: 400 });
+    if (!body.supplierId || !body.locationId || !items?.length) {
+      return NextResponse.json({ error: "supplierId, locationId et items sont requis" }, { status: 400 });
     }
 
     for (const item of items) {
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
     const order = await prisma.purchaseOrder.create({
       data: {
         supplierId: body.supplierId,
+        locationId: body.locationId,
         createdById: user.sub,
         items: {
           create: items.map((item) => ({
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
           })),
         },
       },
-      include: { supplier: true, items: { include: { product: { include: { unit: true } } } } },
+      include: { supplier: true, location: true, items: { include: { product: { include: { unit: true } } } } },
     });
 
     return NextResponse.json(order, { status: 201 });

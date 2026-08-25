@@ -24,6 +24,8 @@ enum StockMovementType {
   PURCHASE_RECEPTION
   SALE
   ADJUSTMENT
+  TRANSFER_OUT
+  TRANSFER_IN
 }
 
 model User {
@@ -39,6 +41,26 @@ model User {
   createdPurchaseOrders PurchaseOrder[]
   sales                 Sale[]
   stockMovements        StockMovement[]
+  stockTransfers        StockTransfer[]
+}
+
+// Emplacement / point de vente physique. Le catalogue (produits, catégories,
+// fournisseurs, clients) reste partagé entre emplacements ; seul le stock
+// (ProductStock) est propre à chacun.
+model Location {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  address   String?
+  phone     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  stocks         ProductStock[]
+  purchaseOrders PurchaseOrder[]
+  sales          Sale[]
+  stockMovements StockMovement[]
+  transfersFrom  StockTransfer[] @relation("TransferFrom")
+  transfersTo    StockTransfer[] @relation("TransferTo")
 }
 
 model Unit {
@@ -85,7 +107,6 @@ model Product {
   unit           Unit                @relation(fields: [unitId], references: [id])
   purchasePrice  Decimal             @db.Decimal(10, 2)
   sellingPrice   Decimal             @db.Decimal(10, 2)
-  stockQuantity  Int                 @default(0)
   alertThreshold Int                 @default(0)
   isActive       Boolean             @default(true)
   createdAt      DateTime            @default(now())
@@ -95,6 +116,20 @@ model Product {
   saleItems          SaleItem[]
   stockMovements     StockMovement[]
   sellUnits          ProductSellUnit[]
+  stocks             ProductStock[]
+  stockTransfers     StockTransfer[]
+}
+
+// Quantité en stock d'un produit à un emplacement donné (unité de stock du produit).
+model ProductStock {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  quantity   Int      @default(0)
+
+  @@unique([productId, locationId])
 }
 
 // Unité de vente alternative (ex. "Boîte de 10" pour un produit dont le stock
@@ -141,6 +176,8 @@ model PurchaseOrder {
   id         String              @id @default(cuid())
   supplierId String
   supplier   Supplier            @relation(fields: [supplierId], references: [id])
+  locationId String
+  location   Location            @relation(fields: [locationId], references: [id])
   status     PurchaseOrderStatus @default(PENDING)
   orderDate  DateTime            @default(now())
   receivedAt DateTime?
@@ -168,6 +205,8 @@ model Sale {
   client      Client   @relation(fields: [clientId], references: [id])
   sellerId    String
   seller      User     @relation(fields: [sellerId], references: [id])
+  locationId  String
+  location    Location @relation(fields: [locationId], references: [id])
   totalAmount Decimal  @db.Decimal(10, 2)
   createdAt   DateTime @default(now())
 
@@ -190,6 +229,8 @@ model StockMovement {
   id            String             @id @default(cuid())
   productId     String
   product       Product            @relation(fields: [productId], references: [id])
+  locationId    String
+  location      Location           @relation(fields: [locationId], references: [id])
   type          StockMovementType
   quantity      Int
   referenceType String?
@@ -198,6 +239,23 @@ model StockMovement {
   createdById   String
   createdBy     User               @relation(fields: [createdById], references: [id])
   createdAt     DateTime           @default(now())
+}
+
+// Déplacement de stock d'un emplacement vers un autre, tracé comme deux
+// mouvements liés (TRANSFER_OUT à la source, TRANSFER_IN à la destination).
+model StockTransfer {
+  id             String   @id @default(cuid())
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id])
+  fromLocationId String
+  fromLocation   Location @relation("TransferFrom", fields: [fromLocationId], references: [id])
+  toLocationId   String
+  toLocation     Location @relation("TransferTo", fields: [toLocationId], references: [id])
+  quantity       Int
+  note           String?
+  createdById    String
+  createdBy      User     @relation(fields: [createdById], references: [id])
+  createdAt      DateTime @default(now())
 }
 
 // Ligne unique (singleton, id fixe) : informations du cabinet affichées dans

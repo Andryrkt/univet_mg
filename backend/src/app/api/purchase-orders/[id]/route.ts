@@ -9,6 +9,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       where: { id: params.id },
       include: {
         supplier: true,
+        location: true,
         createdBy: { select: { id: true, name: true } },
         items: { include: { product: { include: { unit: true } } } },
       },

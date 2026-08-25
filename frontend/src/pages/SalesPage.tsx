@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
-import type { Client, Product } from "../lib/types";
+import type { Client, Location, Product } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Select";
 
@@ -18,9 +18,10 @@ type SellOption = {
 
 type CartLine = { key: string; quantity: number };
 
-function buildSellOptions(products: Product[]): SellOption[] {
+function buildSellOptions(products: Product[], locationId: string): SellOption[] {
   const options: SellOption[] = [];
   for (const p of products) {
+    const stockAtLocation = p.stocks.find((s) => s.locationId === locationId)?.quantity ?? 0;
     options.push({
       key: `${p.id}:base`,
       productId: p.id,
@@ -28,7 +29,7 @@ function buildSellOptions(products: Product[]): SellOption[] {
       unitLabel: p.unit.symbol ?? p.unit.name,
       unitPrice: Number(p.sellingPrice),
       conversionFactor: 1,
-      maxQuantity: p.stockQuantity,
+      maxQuantity: stockAtLocation,
     });
     for (const su of p.sellUnits) {
       options.push({
@@ -39,7 +40,7 @@ function buildSellOptions(products: Product[]): SellOption[] {
         unitLabel: su.unit.symbol ?? su.unit.name,
         unitPrice: Number(su.sellingPrice),
         conversionFactor: su.conversionFactor,
-        maxQuantity: Math.floor(p.stockQuantity / su.conversionFactor),
+        maxQuantity: Math.floor(stockAtLocation / su.conversionFactor),
       });
     }
   }
@@ -50,6 +51,8 @@ export function SalesPage() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [locationId, setLocationId] = useState("");
   const [clientId, setClientId] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -57,16 +60,24 @@ export function SalesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.get<Client[]>("/clients"), api.get<Product[]>("/products")])
-      .then(([c, p]) => {
+    Promise.all([api.get<Client[]>("/clients"), api.get<Product[]>("/products"), api.get<Location[]>("/locations")])
+      .then(([c, p, l]) => {
         setClients(c);
         setProducts(p.filter((pr) => pr.isActive));
+        const activeLocations = l.filter((loc) => loc.isActive);
+        setLocations(activeLocations);
+        setLocationId(activeLocations[0]?.id ?? "");
       })
       .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur de chargement"))
       .finally(() => setLoading(false));
   }, []);
 
-  const options = buildSellOptions(products);
+  const options = buildSellOptions(products, locationId);
+
+  function changeLocation(newLocationId: string) {
+    setLocationId(newLocationId);
+    setCart([]);
+  }
 
   function addOption(key: string) {
     if (!key) return;
@@ -93,12 +104,13 @@ export function SalesPage() {
   }, 0);
 
   async function handleSubmit() {
-    if (!clientId || cart.length === 0) return;
+    if (!clientId || !locationId || cart.length === 0) return;
     setSaving(true);
     setError(null);
     try {
       const sale = await api.post<{ id: string }>("/sales", {
         clientId,
+        locationId,
         items: cart.map((l) => {
           const option = options.find((o) => o.key === l.key)!;
           return { productId: option.productId, sellUnitId: option.sellUnitId, quantity: l.quantity };
@@ -119,7 +131,15 @@ export function SalesPage() {
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
         <h1 className="text-xl font-semibold text-slate-900">Point de vente</h1>
-        <Select value="" onChange={(e) => addOption(e.target.value)}>
+        <Select label="Emplacement" required value={locationId} onChange={(e) => changeLocation(e.target.value)}>
+          <option value="">Sélectionner…</option>
+          {locations.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.name}
+            </option>
+          ))}
+        </Select>
+        <Select value="" onChange={(e) => addOption(e.target.value)} disabled={!locationId}>
           <option value="">Ajouter un produit…</option>
           {options.map((o) => (
             <option key={o.key} value={o.key} disabled={o.maxQuantity <= 0}>
@@ -202,7 +222,7 @@ export function SalesPage() {
             <span>{total.toFixed(2)} Ar</span>
           </div>
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-          <Button className="w-full" onClick={handleSubmit} disabled={saving || !clientId || cart.length === 0}>
+          <Button className="w-full" onClick={handleSubmit} disabled={saving || !clientId || !locationId || cart.length === 0}>
             {saving ? "Validation…" : "Valider la vente"}
           </Button>
         </div>

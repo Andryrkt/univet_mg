@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
-import type { PurchaseOrder, Supplier, Product } from "../lib/types";
+import type { PurchaseOrder, Supplier, Product, Location } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
@@ -27,23 +27,27 @@ export function PurchaseOrdersPage() {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [supplierId, setSupplierId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [lines, setLines] = useState<LineForm[]>([{ productId: "", quantityOrdered: "", unitPrice: "" }]);
   const [saving, setSaving] = useState(false);
 
   async function load() {
     try {
-      const [o, s, p] = await Promise.all([
+      const [o, s, p, l] = await Promise.all([
         api.get<PurchaseOrder[]>("/purchase-orders"),
         api.get<Supplier[]>("/suppliers"),
         api.get<Product[]>("/products"),
+        api.get<Location[]>("/locations"),
       ]);
       setOrders(o);
       setSuppliers(s);
       setProducts(p);
+      setLocations(l.filter((loc) => loc.isActive));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur de chargement");
     } finally {
@@ -69,6 +73,7 @@ export function PurchaseOrdersPage() {
 
   function resetForm() {
     setSupplierId("");
+    setLocationId("");
     setLines([{ productId: "", quantityOrdered: "", unitPrice: "" }]);
   }
 
@@ -79,6 +84,7 @@ export function PurchaseOrdersPage() {
     try {
       await api.post("/purchase-orders", {
         supplierId,
+        locationId,
         items: lines.map((l) => ({
           productId: l.productId,
           quantityOrdered: Number(l.quantityOrdered),
@@ -111,6 +117,7 @@ export function PurchaseOrdersPage() {
           <thead className="bg-slate-50">
             <tr>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Fournisseur</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600">Emplacement</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Date</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Statut</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600">Lignes</th>
@@ -119,7 +126,7 @@ export function PurchaseOrdersPage() {
           <tbody className="divide-y divide-slate-100">
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
                   Aucune commande
                 </td>
               </tr>
@@ -131,6 +138,7 @@ export function PurchaseOrdersPage() {
                       {o.supplier.name}
                     </Link>
                   </td>
+                  <td className="px-4 py-2 text-slate-700">{o.location.name}</td>
                   <td className="px-4 py-2 text-slate-700">{new Date(o.orderDate).toLocaleDateString()}</td>
                   <td className="px-4 py-2">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColor[o.status]}`}>
@@ -152,6 +160,20 @@ export function PurchaseOrdersPage() {
             {suppliers.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
+              </option>
+            ))}
+          </Select>
+
+          <Select
+            label="Emplacement destinataire"
+            required
+            value={locationId}
+            onChange={(e) => setLocationId(e.target.value)}
+          >
+            <option value="">Sélectionner…</option>
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.name}
               </option>
             ))}
           </Select>

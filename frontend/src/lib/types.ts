@@ -31,6 +31,22 @@ export type ProductSellUnit = {
   sellingPrice: string;
 };
 
+export type Location = {
+  id: string;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  isActive: boolean;
+};
+
+export type ProductStock = {
+  id: string;
+  productId: string;
+  locationId: string;
+  location: Location;
+  quantity: number;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -41,10 +57,10 @@ export type Product = {
   unit: Unit;
   purchasePrice: string;
   sellingPrice: string;
-  stockQuantity: number;
   alertThreshold: number;
   isActive: boolean;
   sellUnits: ProductSellUnit[];
+  stocks: ProductStock[];
 };
 
 export type Animal = {
@@ -81,6 +97,8 @@ export type PurchaseOrder = {
   id: string;
   supplierId: string;
   supplier: Supplier;
+  locationId: string;
+  location: Location;
   status: "PENDING" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CANCELLED";
   orderDate: string;
   receivedAt: string | null;
@@ -104,6 +122,8 @@ export type Sale = {
   client: Client;
   sellerId: string;
   seller: { id: string; name: string };
+  locationId: string;
+  location: Location;
   totalAmount: string;
   createdAt: string;
   items: SaleItem[];
@@ -129,7 +149,23 @@ export type StockMovement = {
   id: string;
   productId: string;
   product: Product;
-  type: "PURCHASE_RECEPTION" | "SALE" | "ADJUSTMENT";
+  locationId: string;
+  location: Location;
+  type: "PURCHASE_RECEPTION" | "SALE" | "ADJUSTMENT" | "TRANSFER_OUT" | "TRANSFER_IN";
+  quantity: number;
+  note: string | null;
+  createdBy: { id: string; name: string };
+  createdAt: string;
+};
+
+export type StockTransfer = {
+  id: string;
+  productId: string;
+  product: Product;
+  fromLocationId: string;
+  fromLocation: Location;
+  toLocationId: string;
+  toLocation: Location;
   quantity: number;
   note: string | null;
   createdBy: { id: string; name: string };

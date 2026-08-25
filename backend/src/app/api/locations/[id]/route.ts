@@ -7,21 +7,16 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     await requireRole(request, ["ADMIN", "MODERATOR"]);
     const body = await request.json();
 
-    const product = await prisma.product.update({
+    const location = await prisma.location.update({
       where: { id: params.id },
       data: {
         name: body.name,
-        sku: body.sku ?? null,
-        categoryId: body.categoryId,
-        unitId: body.unitId,
-        purchasePrice: body.purchasePrice,
-        sellingPrice: body.sellingPrice,
-        alertThreshold: body.alertThreshold,
+        address: body.address ?? null,
+        phone: body.phone ?? null,
         isActive: body.isActive,
       },
-      include: { category: true, unit: true, sellUnits: { include: { unit: true } }, stocks: { include: { location: true } } },
     });
-    return NextResponse.json(product);
+    return NextResponse.json(location);
   } catch (error) {
     return handleApiError(error);
   }
@@ -30,7 +25,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     await requireRole(request, ["ADMIN", "MODERATOR"]);
-    await prisma.product.update({ where: { id: params.id }, data: { isActive: false } });
+    // Désactivation plutôt que suppression : préserve l'historique (ventes,
+    // commandes, mouvements) déjà rattaché à cet emplacement.
+    await prisma.location.update({ where: { id: params.id }, data: { isActive: false } });
     return NextResponse.json({ ok: true });
   } catch (error) {
     return handleApiError(error);

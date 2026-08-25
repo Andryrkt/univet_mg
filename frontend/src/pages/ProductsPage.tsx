@@ -1,12 +1,16 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
-import type { Product, Category, Unit } from "../lib/types";
+import type { Product, Category, Unit, Location } from "../lib/types";
 import { buildCategoryTree } from "../lib/categoryTree";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
+
+function totalStock(product: Product): number {
+  return product.stocks.reduce((sum, s) => sum + s.quantity, 0);
+}
 
 type FormState = {
   name: string;
@@ -35,6 +39,7 @@ export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -43,7 +48,7 @@ export function ProductsPage() {
   const [saving, setSaving] = useState(false);
 
   const [adjustTarget, setAdjustTarget] = useState<Product | null>(null);
-  const [adjustForm, setAdjustForm] = useState({ quantity: "", note: "" });
+  const [adjustForm, setAdjustForm] = useState({ locationId: "", quantity: "", note: "" });
   const [adjustSaving, setAdjustSaving] = useState(false);
 
   const [sellUnitsTargetId, setSellUnitsTargetId] = useState<string | null>(null);
@@ -52,14 +57,16 @@ export function ProductsPage() {
 
   async function load() {
     try {
-      const [p, c, u] = await Promise.all([
+      const [p, c, u, l] = await Promise.all([
         api.get<Product[]>("/products"),
         api.get<Category[]>("/categories"),
         api.get<Unit[]>("/units"),
+        api.get<Location[]>("/locations"),
       ]);
       setProducts(p);
       setCategories(c);
       setUnits(u);
+      setLocations(l.filter((loc) => loc.isActive));
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur de chargement");
     } finally {
@@ -132,7 +139,7 @@ export function ProductsPage() {
 
   function openAdjust(product: Product) {
     setAdjustTarget(product);
-    setAdjustForm({ quantity: "", note: "" });
+    setAdjustForm({ locationId: locations[0]?.id ?? "", quantity: "", note: "" });
     setError(null);
   }
 
@@ -143,6 +150,7 @@ export function ProductsPage() {
     setError(null);
     try {
       await api.post(`/products/${adjustTarget.id}/adjustments`, {
+        locationId: adjustForm.locationId,
         quantity: Number(adjustForm.quantity),
         note: adjustForm.note || null,
       });
@@ -214,7 +222,7 @@ export function ProductsPage() {
               <th className="px-4 py-2 text-left font-medium text-slate-600">Unité</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600">Prix achat</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600">Prix vente</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Stock</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600">Stock total</th>
               {canWrite && <th className="px-4 py-2" />}
             </tr>
           </thead>
@@ -236,10 +244,10 @@ export function ProductsPage() {
                 <td className="px-4 py-2 text-right text-slate-700">{Number(p.sellingPrice).toFixed(2)}</td>
                 <td
                   className={`px-4 py-2 text-right font-medium ${
-                    p.stockQuantity <= p.alertThreshold ? "text-red-600" : "text-slate-700"
+                    totalStock(p) <= p.alertThreshold ? "text-red-600" : "text-slate-700"
                   }`}
                 >
-                  {p.stockQuantity}
+                  {totalStock(p)}
                 </td>
                 {canWrite && (
                   <td className="space-x-2 px-4 py-2 text-right">
@@ -344,7 +352,33 @@ export function ProductsPage() {
       >
         {adjustTarget && (
           <form onSubmit={handleAdjustSubmit} className="space-y-3">
-            <p className="text-sm text-slate-500">Stock actuel : {adjustTarget.stockQuantity}</p>
+            {adjustTarget.stocks.length > 0 && (
+              <ul className="rounded-lg border border-slate-200 text-sm">
+                {adjustTarget.stocks.map((s) => (
+                  <li key={s.id} className="flex justify-between border-b border-slate-100 px-3 py-1 last:border-0">
+                    <span className="text-slate-600">{s.location.name}</span>
+                    <span className="font-medium text-slate-800">{s.quantity}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Select
+              label="Emplacement"
+              required
+              value={adjustForm.locationId}
+              onChange={(e) => setAdjustForm({ ...adjustForm, locationId: e.target.value })}
+            >
+              <option value="">Sélectionner…</option>
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </Select>
+            <p className="text-sm text-slate-500">
+              Stock actuel à cet emplacement :{" "}
+              {adjustTarget.stocks.find((s) => s.locationId === adjustForm.locationId)?.quantity ?? 0}
+            </p>
             <Input
               label="Quantité (positive pour ajouter, négative pour retirer)"
               type="number"
