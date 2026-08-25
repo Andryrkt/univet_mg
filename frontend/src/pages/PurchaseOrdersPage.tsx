@@ -4,6 +4,7 @@ import { api, ApiError } from "../lib/api";
 import type { PurchaseOrder, Supplier, Product, Location } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { AmountInput } from "../components/ui/AmountInput";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
@@ -217,10 +218,7 @@ export function PurchaseOrdersPage() {
                   onChange={(e) => updateLine(i, { quantityOrdered: e.target.value })}
                   required
                 />
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
+                <AmountInput
                   placeholder="PU"
                   value={line.unitPrice}
                   onChange={(e) => updateLine(i, { unitPrice: e.target.value })}

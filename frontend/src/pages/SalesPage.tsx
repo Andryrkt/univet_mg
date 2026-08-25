@@ -4,6 +4,7 @@ import { api, ApiError } from "../lib/api";
 import type { Client, Location, Product } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { AmountInput } from "../components/ui/AmountInput";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
@@ -323,11 +324,8 @@ export function SalesPage() {
               </label>
             </div>
             {paymentMode === "partial" && (
-              <Input
+              <AmountInput
                 label="Montant payé maintenant"
-                type="number"
-                min="0"
-                max={total}
                 value={partialAmount}
                 onChange={(e) => setPartialAmount(e.target.value)}
               />
@@ -337,10 +335,8 @@ export function SalesPage() {
             )}
             {paymentMode === "full" && (
               <>
-                <Input
+                <AmountInput
                   label="Montant reçu (espèces)"
-                  type="number"
-                  min={total}
                   placeholder={String(total)}
                   value={cashReceived}
                   onChange={(e) => setCashReceived(e.target.value)}

@@ -6,6 +6,7 @@ import { buildCategoryTree } from "../lib/categoryTree";
 import { formatAmount } from "../lib/format";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { AmountInput } from "../components/ui/AmountInput";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
@@ -338,20 +339,14 @@ export function ProductsPage() {
             ))}
           </Select>
           <div className="grid grid-cols-2 gap-3">
-            <Input
+            <AmountInput
               label="Prix d'achat"
-              type="number"
-              step="0.01"
-              min="0"
               required
               value={form.purchasePrice}
               onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })}
             />
-            <Input
+            <AmountInput
               label="Prix de vente"
-              type="number"
-              step="0.01"
-              min="0"
               required
               value={form.sellingPrice}
               onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
@@ -488,11 +483,8 @@ export function ProductsPage() {
                 value={newSellUnit.conversionFactor}
                 onChange={(e) => setNewSellUnit({ ...newSellUnit, conversionFactor: e.target.value })}
               />
-              <Input
+              <AmountInput
                 label="Prix de vente pour cette unité"
-                type="number"
-                step="0.01"
-                min="0"
                 required
                 value={newSellUnit.sellingPrice}
                 onChange={(e) => setNewSellUnit({ ...newSellUnit, sellingPrice: e.target.value })}

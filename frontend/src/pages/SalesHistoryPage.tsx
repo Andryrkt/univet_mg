@@ -4,6 +4,7 @@ import { api, ApiError } from "../lib/api";
 import type { Product, Sale } from "../lib/types";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
+import { AmountInput } from "../components/ui/AmountInput";
 import { Select } from "../components/ui/Select";
 import { Button } from "../components/ui/Button";
 import { formatAmount } from "../lib/format";
@@ -360,21 +361,16 @@ export function SalesHistoryPage() {
                 {paymentError && (
                   <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{paymentError}</p>
                 )}
-                <Input
+                <AmountInput
                   label="Enregistrer un paiement"
-                  type="number"
-                  min="0"
-                  max={Number(selected.totalAmount) - Number(selected.amountPaid)}
                   required
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                 />
                 {paymentAmountValue > 0 && (
                   <>
-                    <Input
+                    <AmountInput
                       label="Montant reçu (espèces)"
-                      type="number"
-                      min={paymentAmountValue}
                       placeholder={String(paymentAmountValue)}
                       value={paymentCashReceived}
                       onChange={(e) => setPaymentCashReceived(e.target.value)}
@@ -448,21 +444,16 @@ export function SalesHistoryPage() {
                       </label>
                     </div>
                     {addPaymentMode === "partial" && (
-                      <Input
+                      <AmountInput
                         label="Montant payé maintenant"
-                        type="number"
-                        min="0"
-                        max={addSubtotal}
                         value={addPartialAmount}
                         onChange={(e) => setAddPartialAmount(e.target.value)}
                       />
                     )}
                     {addPaymentMode === "full" && (
                       <>
-                        <Input
+                        <AmountInput
                           label="Montant reçu (espèces)"
-                          type="number"
-                          min={addSubtotal}
                           placeholder={String(addSubtotal)}
                           value={addCashReceived}
                           onChange={(e) => setAddCashReceived(e.target.value)}
