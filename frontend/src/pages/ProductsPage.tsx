@@ -42,6 +42,10 @@ export function ProductsPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
 
+  const [adjustTarget, setAdjustTarget] = useState<Product | null>(null);
+  const [adjustForm, setAdjustForm] = useState({ quantity: "", note: "" });
+  const [adjustSaving, setAdjustSaving] = useState(false);
+
   async function load() {
     setLoading(true);
     try {
@@ -123,6 +127,31 @@ export function ProductsPage() {
     }
   }
 
+  function openAdjust(product: Product) {
+    setAdjustTarget(product);
+    setAdjustForm({ quantity: "", note: "" });
+    setError(null);
+  }
+
+  async function handleAdjustSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!adjustTarget) return;
+    setAdjustSaving(true);
+    setError(null);
+    try {
+      await api.post(`/products/${adjustTarget.id}/adjustments`, {
+        quantity: Number(adjustForm.quantity),
+        note: adjustForm.note || null,
+      });
+      setAdjustTarget(null);
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erreur d'ajustement");
+    } finally {
+      setAdjustSaving(false);
+    }
+  }
+
   if (loading) return <p className="text-slate-400">Chargement…</p>;
 
   return (
@@ -172,6 +201,9 @@ export function ProductsPage() {
                 </td>
                 {canWrite && (
                   <td className="space-x-2 px-4 py-2 text-right">
+                    <button onClick={() => openAdjust(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                      Ajuster stock
+                    </button>
                     <button onClick={() => openEdit(p)} className="text-sm text-slate-500 hover:text-slate-900">
                       Modifier
                     </button>
@@ -258,6 +290,40 @@ export function ProductsPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        open={!!adjustTarget}
+        onClose={() => setAdjustTarget(null)}
+        title={adjustTarget ? `Ajuster le stock — ${adjustTarget.name}` : "Ajuster le stock"}
+      >
+        {adjustTarget && (
+          <form onSubmit={handleAdjustSubmit} className="space-y-3">
+            <p className="text-sm text-slate-500">Stock actuel : {adjustTarget.stockQuantity}</p>
+            <Input
+              label="Quantité (positive pour ajouter, négative pour retirer)"
+              type="number"
+              step="1"
+              required
+              value={adjustForm.quantity}
+              onChange={(e) => setAdjustForm({ ...adjustForm, quantity: e.target.value })}
+            />
+            <Input
+              label="Motif (optionnel)"
+              placeholder="Ex : stock initial, inventaire, produit périmé…"
+              value={adjustForm.note}
+              onChange={(e) => setAdjustForm({ ...adjustForm, note: e.target.value })}
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="secondary" onClick={() => setAdjustTarget(null)}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={adjustSaving}>
+                {adjustSaving ? "Enregistrement…" : "Appliquer"}
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   );
