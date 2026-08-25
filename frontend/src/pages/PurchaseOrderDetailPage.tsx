@@ -22,9 +22,9 @@ export function PurchaseOrderDetailPage() {
   const [receiveNow, setReceiveNow] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-  async function load() {
+  async function load(showSpinner = false) {
     if (!id) return;
-    setLoading(true);
+    if (showSpinner) setLoading(true);
     try {
       const [data, receptionData] = await Promise.all([
         api.get<PurchaseOrder>(`/purchase-orders/${id}`),
@@ -45,7 +45,8 @@ export function PurchaseOrderDetailPage() {
   }
 
   useEffect(() => {
-    load();
+    load(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const canReceive = order?.status === "PENDING" || order?.status === "PARTIALLY_RECEIVED";

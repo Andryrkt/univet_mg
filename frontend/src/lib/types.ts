@@ -22,6 +22,15 @@ export type Supplier = {
   address: string | null;
 };
 
+export type ProductSellUnit = {
+  id: string;
+  productId: string;
+  unitId: string;
+  unit: Unit;
+  conversionFactor: number;
+  sellingPrice: string;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -35,6 +44,7 @@ export type Product = {
   stockQuantity: number;
   alertThreshold: number;
   isActive: boolean;
+  sellUnits: ProductSellUnit[];
 };
 
 export type Animal = {
@@ -83,6 +93,7 @@ export type SaleItem = {
   productId: string;
   product: Product;
   quantity: number;
+  unitLabel: string;
   unitPrice: string;
   subtotal: string;
 };

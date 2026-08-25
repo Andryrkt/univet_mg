@@ -17,7 +17,6 @@ export function UsersPage() {
   const [saving, setSaving] = useState(false);
 
   async function load() {
-    setLoading(true);
     try {
       setUsers(await api.get<User[]>("/users"));
     } catch (e) {

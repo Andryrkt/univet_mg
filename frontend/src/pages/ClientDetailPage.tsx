@@ -17,9 +17,9 @@ export function ClientDetailPage() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
-  async function load() {
+  async function load(showSpinner: boolean) {
     if (!id) return;
-    setLoading(true);
+    if (showSpinner) setLoading(true);
     try {
       setClient(await api.get<ClientDetail>(`/clients/${id}`));
     } catch (e) {
@@ -30,7 +30,8 @@ export function ClientDetailPage() {
   }
 
   useEffect(() => {
-    load();
+    load(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function handleSubmit(e: FormEvent) {
@@ -42,7 +43,7 @@ export function ClientDetailPage() {
       await api.post(`/clients/${id}/animals`, { ...form, breed: form.breed || null, notes: form.notes || null });
       setModalOpen(false);
       setForm(emptyForm);
-      await load();
+      await load(false);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur d'enregistrement");
     } finally {

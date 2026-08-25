@@ -181,9 +181,9 @@ async function seedSampleData(adminId: string) {
     },
   });
 
-  const saleLines: { product: Product; quantity: number }[] = [
-    { product: vermifuge, quantity: 2 },
-    { product: collier, quantity: 1 },
+  const saleLines: { product: Product; quantity: number; unitLabel: string }[] = [
+    { product: vermifuge, quantity: 2, unitLabel: comprime.symbol ?? comprime.name },
+    { product: collier, quantity: 1, unitLabel: boite.symbol ?? boite.name },
   ];
   const totalAmount = saleLines.reduce((sum, l) => sum + Number(l.product.sellingPrice) * l.quantity, 0);
 
@@ -196,6 +196,7 @@ async function seedSampleData(adminId: string) {
         create: saleLines.map((l) => ({
           productId: l.product.id,
           quantity: l.quantity,
+          unitLabel: l.unitLabel,
           unitPrice: l.product.sellingPrice,
           subtotal: Number(l.product.sellingPrice) * l.quantity,
         })),

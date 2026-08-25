@@ -47,6 +47,7 @@ model Unit {
   symbol    String?
   createdAt DateTime  @default(now())
   products  Product[]
+  productSellUnits ProductSellUnit[]
 }
 
 model Category {
@@ -93,6 +94,23 @@ model Product {
   purchaseOrderItems PurchaseOrderItem[]
   saleItems          SaleItem[]
   stockMovements     StockMovement[]
+  sellUnits          ProductSellUnit[]
+}
+
+// Unité de vente alternative (ex. "Boîte de 10" pour un produit dont le stock
+// est suivi en comprimés) : conversionFactor = quantité en unité de stock du
+// produit correspondant à 1 de cette unité de vente, avec son propre prix.
+model ProductSellUnit {
+  id               String   @id @default(cuid())
+  productId        String
+  product          Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  unitId           String
+  unit             Unit     @relation(fields: [unitId], references: [id])
+  conversionFactor Int
+  sellingPrice     Decimal  @db.Decimal(10, 2)
+  createdAt        DateTime @default(now())
+
+  @@unique([productId, unitId])
 }
 
 model Client {
@@ -163,6 +181,7 @@ model SaleItem {
   productId String
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
+  unitLabel String
   unitPrice Decimal @db.Decimal(10, 2)
   subtotal  Decimal @db.Decimal(10, 2)
 }

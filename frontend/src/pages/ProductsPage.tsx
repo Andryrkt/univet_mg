@@ -46,8 +46,11 @@ export function ProductsPage() {
   const [adjustForm, setAdjustForm] = useState({ quantity: "", note: "" });
   const [adjustSaving, setAdjustSaving] = useState(false);
 
+  const [sellUnitsTargetId, setSellUnitsTargetId] = useState<string | null>(null);
+  const [newSellUnit, setNewSellUnit] = useState({ unitId: "", conversionFactor: "", sellingPrice: "" });
+  const [sellUnitSaving, setSellUnitSaving] = useState(false);
+
   async function load() {
-    setLoading(true);
     try {
       const [p, c, u] = await Promise.all([
         api.get<Product[]>("/products"),
@@ -152,7 +155,46 @@ export function ProductsPage() {
     }
   }
 
+  function openSellUnits(product: Product) {
+    setSellUnitsTargetId(product.id);
+    setNewSellUnit({ unitId: "", conversionFactor: "", sellingPrice: "" });
+    setError(null);
+  }
+
+  async function handleAddSellUnit(e: FormEvent) {
+    e.preventDefault();
+    if (!sellUnitsTargetId) return;
+    setSellUnitSaving(true);
+    setError(null);
+    try {
+      await api.post(`/products/${sellUnitsTargetId}/sell-units`, {
+        unitId: newSellUnit.unitId,
+        conversionFactor: Number(newSellUnit.conversionFactor),
+        sellingPrice: Number(newSellUnit.sellingPrice),
+      });
+      setNewSellUnit({ unitId: "", conversionFactor: "", sellingPrice: "" });
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erreur d'enregistrement");
+    } finally {
+      setSellUnitSaving(false);
+    }
+  }
+
+  async function handleDeleteSellUnit(sellUnitId: string) {
+    if (!sellUnitsTargetId || !confirm("Supprimer cette unité de vente ?")) return;
+    setError(null);
+    try {
+      await api.delete(`/products/${sellUnitsTargetId}/sell-units/${sellUnitId}`);
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erreur de suppression");
+    }
+  }
+
   if (loading) return <p className="text-slate-400">Chargement…</p>;
+
+  const sellUnitsTarget = products.find((p) => p.id === sellUnitsTargetId) ?? null;
 
   return (
     <div className="space-y-4">
@@ -201,6 +243,9 @@ export function ProductsPage() {
                 </td>
                 {canWrite && (
                   <td className="space-x-2 px-4 py-2 text-right">
+                    <button onClick={() => openSellUnits(p)} className="text-sm text-slate-500 hover:text-slate-900">
+                      Unités de vente
+                    </button>
                     <button onClick={() => openAdjust(p)} className="text-sm text-slate-500 hover:text-slate-900">
                       Ajuster stock
                     </button>
@@ -323,6 +368,81 @@ export function ProductsPage() {
               </Button>
             </div>
           </form>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!sellUnitsTarget}
+        onClose={() => setSellUnitsTargetId(null)}
+        title={sellUnitsTarget ? `Unités de vente — ${sellUnitsTarget.name}` : "Unités de vente"}
+      >
+        {sellUnitsTarget && (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-500">
+              Unité de stock : <span className="font-medium">{sellUnitsTarget.unit.name}</span> — prix de base{" "}
+              {Number(sellUnitsTarget.sellingPrice).toFixed(2)} Ar / {sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name}
+            </p>
+
+            {sellUnitsTarget.sellUnits.length > 0 && (
+              <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                {sellUnitsTarget.sellUnits.map((su) => (
+                  <li key={su.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                    <span className="text-slate-700">
+                      {su.unit.name} = {su.conversionFactor} {sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name} —{" "}
+                      {Number(su.sellingPrice).toFixed(2)} Ar
+                    </span>
+                    <button onClick={() => handleDeleteSellUnit(su.id)} className="text-sm text-red-500 hover:text-red-700">
+                      Supprimer
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <form onSubmit={handleAddSellUnit} className="space-y-3 border-t border-slate-200 pt-4">
+              <p className="text-sm font-medium text-slate-700">Ajouter une unité de vente</p>
+              <Select
+                label="Unité"
+                required
+                value={newSellUnit.unitId}
+                onChange={(e) => setNewSellUnit({ ...newSellUnit, unitId: e.target.value })}
+              >
+                <option value="">Sélectionner…</option>
+                {units
+                  .filter((u) => u.id !== sellUnitsTarget.unitId)
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+              </Select>
+              <Input
+                label={`Équivaut à combien de ${sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name} ?`}
+                type="number"
+                min="1"
+                required
+                value={newSellUnit.conversionFactor}
+                onChange={(e) => setNewSellUnit({ ...newSellUnit, conversionFactor: e.target.value })}
+              />
+              <Input
+                label="Prix de vente pour cette unité"
+                type="number"
+                step="0.01"
+                min="0"
+                required
+                value={newSellUnit.sellingPrice}
+                onChange={(e) => setNewSellUnit({ ...newSellUnit, sellingPrice: e.target.value })}
+              />
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="secondary" onClick={() => setSellUnitsTargetId(null)}>
+                  Fermer
+                </Button>
+                <Button type="submit" disabled={sellUnitSaving}>
+                  {sellUnitSaving ? "Enregistrement…" : "Ajouter"}
+                </Button>
+              </div>
+            </form>
+          </div>
         )}
       </Modal>
     </div>

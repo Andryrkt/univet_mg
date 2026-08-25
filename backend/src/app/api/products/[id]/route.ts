@@ -19,7 +19,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         alertThreshold: body.alertThreshold,
         isActive: body.isActive,
       },
-      include: { category: true, unit: true },
+      include: { category: true, unit: true, sellUnits: { include: { unit: true } } },
     });
     return NextResponse.json(product);
   } catch (error) {

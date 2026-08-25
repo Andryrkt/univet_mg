@@ -35,7 +35,6 @@ export function PurchaseOrdersPage() {
   const [saving, setSaving] = useState(false);
 
   async function load() {
-    setLoading(true);
     try {
       const [o, s, p] = await Promise.all([
         api.get<PurchaseOrder[]>("/purchase-orders"),

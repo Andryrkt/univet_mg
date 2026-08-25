@@ -17,7 +17,6 @@ export function ClientsPage() {
   const [saving, setSaving] = useState(false);
 
   async function load() {
-    setLoading(true);
     try {
       setClients(await api.get<Client[]>("/clients"));
     } catch (e) {

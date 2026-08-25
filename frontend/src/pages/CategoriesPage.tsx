@@ -23,7 +23,6 @@ export function CategoriesPage() {
   const [saving, setSaving] = useState(false);
 
   async function load() {
-    setLoading(true);
     try {
       setCategories(await api.get<Category[]>("/categories"));
     } catch (e) {

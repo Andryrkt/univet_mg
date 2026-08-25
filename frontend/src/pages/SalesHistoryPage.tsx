@@ -77,7 +77,7 @@ export function SalesHistoryPage() {
               {selected.items.map((item) => (
                 <li key={item.id} className="flex items-center justify-between py-2">
                   <span>
-                    {item.product.name} × {item.quantity}
+                    {item.product.name} × {item.quantity} {item.unitLabel}
                   </span>
                   <span className="font-medium">{Number(item.subtotal).toFixed(2)} Ar</span>
                 </li>

@@ -5,7 +5,46 @@ import type { Client, Product } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Select";
 
-type CartLine = { productId: string; quantity: number };
+type SellOption = {
+  key: string;
+  productId: string;
+  sellUnitId?: string;
+  productName: string;
+  unitLabel: string;
+  unitPrice: number;
+  conversionFactor: number;
+  maxQuantity: number;
+};
+
+type CartLine = { key: string; quantity: number };
+
+function buildSellOptions(products: Product[]): SellOption[] {
+  const options: SellOption[] = [];
+  for (const p of products) {
+    options.push({
+      key: `${p.id}:base`,
+      productId: p.id,
+      productName: p.name,
+      unitLabel: p.unit.symbol ?? p.unit.name,
+      unitPrice: Number(p.sellingPrice),
+      conversionFactor: 1,
+      maxQuantity: p.stockQuantity,
+    });
+    for (const su of p.sellUnits) {
+      options.push({
+        key: `${p.id}:${su.id}`,
+        productId: p.id,
+        sellUnitId: su.id,
+        productName: p.name,
+        unitLabel: su.unit.symbol ?? su.unit.name,
+        unitPrice: Number(su.sellingPrice),
+        conversionFactor: su.conversionFactor,
+        maxQuantity: Math.floor(p.stockQuantity / su.conversionFactor),
+      });
+    }
+  }
+  return options;
+}
 
 export function SalesPage() {
   const navigate = useNavigate();
@@ -27,28 +66,30 @@ export function SalesPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  function addProduct(productId: string) {
-    if (!productId) return;
+  const options = buildSellOptions(products);
+
+  function addOption(key: string) {
+    if (!key) return;
     setCart((prev) => {
-      const existing = prev.find((l) => l.productId === productId);
+      const existing = prev.find((l) => l.key === key);
       if (existing) {
-        return prev.map((l) => (l.productId === productId ? { ...l, quantity: l.quantity + 1 } : l));
+        return prev.map((l) => (l.key === key ? { ...l, quantity: l.quantity + 1 } : l));
       }
-      return [...prev, { productId, quantity: 1 }];
+      return [...prev, { key, quantity: 1 }];
     });
   }
 
-  function updateQuantity(productId: string, quantity: number) {
-    setCart((prev) => prev.map((l) => (l.productId === productId ? { ...l, quantity } : l)));
+  function updateQuantity(key: string, quantity: number) {
+    setCart((prev) => prev.map((l) => (l.key === key ? { ...l, quantity } : l)));
   }
 
-  function removeLine(productId: string) {
-    setCart((prev) => prev.filter((l) => l.productId !== productId));
+  function removeLine(key: string) {
+    setCart((prev) => prev.filter((l) => l.key !== key));
   }
 
   const total = cart.reduce((sum, line) => {
-    const product = products.find((p) => p.id === line.productId);
-    return sum + (product ? Number(product.sellingPrice) * line.quantity : 0);
+    const option = options.find((o) => o.key === line.key);
+    return sum + (option ? option.unitPrice * line.quantity : 0);
   }, 0);
 
   async function handleSubmit() {
@@ -58,7 +99,10 @@ export function SalesPage() {
     try {
       const sale = await api.post<{ id: string }>("/sales", {
         clientId,
-        items: cart.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+        items: cart.map((l) => {
+          const option = options.find((o) => o.key === l.key)!;
+          return { productId: option.productId, sellUnitId: option.sellUnitId, quantity: l.quantity };
+        }),
       });
       setCart([]);
       navigate(`/historique-ventes?sale=${sale.id}`);
@@ -75,11 +119,11 @@ export function SalesPage() {
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
         <h1 className="text-xl font-semibold text-slate-900">Point de vente</h1>
-        <Select value="" onChange={(e) => addProduct(e.target.value)}>
+        <Select value="" onChange={(e) => addOption(e.target.value)}>
           <option value="">Ajouter un produit…</option>
-          {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name} — {Number(p.sellingPrice).toFixed(2)} Ar (stock: {p.stockQuantity})
+          {options.map((o) => (
+            <option key={o.key} value={o.key} disabled={o.maxQuantity <= 0}>
+              {o.productName} — {o.unitPrice.toFixed(2)} Ar ({o.unitLabel}, stock: {o.maxQuantity})
             </option>
           ))}
         </Select>
@@ -104,27 +148,29 @@ export function SalesPage() {
                 </tr>
               ) : (
                 cart.map((line) => {
-                  const product = products.find((p) => p.id === line.productId);
-                  if (!product) return null;
+                  const option = options.find((o) => o.key === line.key);
+                  if (!option) return null;
                   return (
-                    <tr key={line.productId}>
-                      <td className="px-4 py-2 text-slate-700">{product.name}</td>
-                      <td className="px-4 py-2 text-right text-slate-700">{Number(product.sellingPrice).toFixed(2)}</td>
+                    <tr key={line.key}>
+                      <td className="px-4 py-2 text-slate-700">
+                        {option.productName} <span className="text-xs text-slate-400">({option.unitLabel})</span>
+                      </td>
+                      <td className="px-4 py-2 text-right text-slate-700">{option.unitPrice.toFixed(2)}</td>
                       <td className="px-4 py-2 text-right">
                         <input
                           type="number"
                           min="1"
-                          max={product.stockQuantity}
+                          max={option.maxQuantity}
                           value={line.quantity}
-                          onChange={(e) => updateQuantity(line.productId, Number(e.target.value))}
+                          onChange={(e) => updateQuantity(line.key, Number(e.target.value))}
                           className="w-16 rounded border border-slate-300 px-2 py-1 text-right text-sm"
                         />
                       </td>
                       <td className="px-4 py-2 text-right text-slate-700">
-                        {(Number(product.sellingPrice) * line.quantity).toFixed(2)}
+                        {(option.unitPrice * line.quantity).toFixed(2)}
                       </td>
                       <td className="px-4 py-2 text-right">
-                        <button onClick={() => removeLine(line.productId)} className="text-sm text-red-500 hover:text-red-700">
+                        <button onClick={() => removeLine(line.key)} className="text-sm text-red-500 hover:text-red-700">
                           ✕
                         </button>
                       </td>

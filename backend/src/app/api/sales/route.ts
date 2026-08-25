@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   }
 }
 
-type SaleItemInput = { productId: string; quantity: number };
+type SaleItemInput = { productId: string; quantity: number; sellUnitId?: string };
 
 export async function POST(request: Request) {
   try {
@@ -43,27 +43,50 @@ export async function POST(request: Request) {
       const saleItemsData: {
         productId: string;
         quantity: number;
+        unitLabel: string;
         unitPrice: Prisma.Decimal;
         subtotal: Prisma.Decimal;
       }[] = [];
+      const stockUpdates: { productId: string; baseQuantity: number }[] = [];
 
       for (const item of items) {
-        const product = await tx.product.findUnique({ where: { id: item.productId } });
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+          include: { unit: true, sellUnits: { include: { unit: true } } },
+        });
         if (!product || !product.isActive) {
           throw new ApiError(400, `Produit introuvable: ${item.productId}`);
         }
-        if (product.stockQuantity < item.quantity) {
+
+        let conversionFactor = 1;
+        let unitPrice = product.sellingPrice;
+        let unitLabel = product.unit.symbol ?? product.unit.name;
+
+        if (item.sellUnitId) {
+          const sellUnit = product.sellUnits.find((su) => su.id === item.sellUnitId);
+          if (!sellUnit) {
+            throw new ApiError(400, `Unité de vente invalide pour "${product.name}"`);
+          }
+          conversionFactor = sellUnit.conversionFactor;
+          unitPrice = sellUnit.sellingPrice;
+          unitLabel = sellUnit.unit.symbol ?? sellUnit.unit.name;
+        }
+
+        const baseQuantity = item.quantity * conversionFactor;
+        if (product.stockQuantity < baseQuantity) {
           throw new ApiError(400, `Stock insuffisant pour "${product.name}" (disponible: ${product.stockQuantity})`);
         }
 
-        const subtotal = product.sellingPrice.mul(item.quantity);
+        const subtotal = unitPrice.mul(item.quantity);
         totalAmount = totalAmount.add(subtotal);
         saleItemsData.push({
           productId: item.productId,
           quantity: item.quantity,
-          unitPrice: product.sellingPrice,
+          unitLabel,
+          unitPrice,
           subtotal,
         });
+        stockUpdates.push({ productId: item.productId, baseQuantity });
       }
 
       const createdSale = await tx.sale.create({
@@ -76,17 +99,17 @@ export async function POST(request: Request) {
         include: { client: true, seller: { select: { id: true, name: true } }, items: { include: { product: true } } },
       });
 
-      for (const item of items) {
+      for (const update of stockUpdates) {
         await tx.product.update({
-          where: { id: item.productId },
-          data: { stockQuantity: { decrement: item.quantity } },
+          where: { id: update.productId },
+          data: { stockQuantity: { decrement: update.baseQuantity } },
         });
 
         await tx.stockMovement.create({
           data: {
-            productId: item.productId,
+            productId: update.productId,
             type: "SALE",
-            quantity: -item.quantity,
+            quantity: -update.baseQuantity,
             referenceType: "Sale",
             referenceId: createdSale.id,
             createdById: user.sub,
