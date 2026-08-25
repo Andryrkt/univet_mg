@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
-import type { PurchaseOrder } from "../lib/types";
+import type { PurchaseOrder, ReceptionBatch } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 
@@ -16,6 +16,7 @@ export function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [order, setOrder] = useState<PurchaseOrder | null>(null);
+  const [receptions, setReceptions] = useState<ReceptionBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [receiveNow, setReceiveNow] = useState<Record<string, string>>({});
@@ -25,8 +26,12 @@ export function PurchaseOrderDetailPage() {
     if (!id) return;
     setLoading(true);
     try {
-      const data = await api.get<PurchaseOrder>(`/purchase-orders/${id}`);
+      const [data, receptionData] = await Promise.all([
+        api.get<PurchaseOrder>(`/purchase-orders/${id}`),
+        api.get<ReceptionBatch[]>(`/purchase-orders/${id}/receptions`),
+      ]);
       setOrder(data);
+      setReceptions(receptionData);
       setReceiveNow(
         Object.fromEntries(
           data.items.map((item) => [item.id, String(Math.max(item.quantityOrdered - item.quantityReceived, 0))])
@@ -188,6 +193,33 @@ export function PurchaseOrderDetailPage() {
           </tfoot>
         </table>
       </div>
+
+      {receptions.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 font-semibold text-slate-900">Historique des réceptions</h2>
+          <ul className="divide-y divide-slate-100">
+            {receptions.map((batch) => (
+              <li key={batch.createdAt} className="flex items-center justify-between py-2 text-sm">
+                <div>
+                  <span className="text-slate-700">{new Date(batch.createdAt).toLocaleString()}</span>
+                  <span className="text-slate-400"> · {batch.createdBy.name} · </span>
+                  <span className="text-slate-600">
+                    {batch.lines.map((l) => `${l.quantity} ${l.unitLabel} ${l.productName}`).join(", ")}
+                  </span>
+                </div>
+                <Link
+                  to={`/commandes/${order.id}/reception/imprimer?at=${encodeURIComponent(batch.createdAt)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 text-sm text-slate-500 hover:text-slate-900"
+                >
+                  Imprimer le bon de réception
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

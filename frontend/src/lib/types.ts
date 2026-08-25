@@ -98,6 +98,12 @@ export type Sale = {
   items: SaleItem[];
 };
 
+export type ReceptionBatch = {
+  createdAt: string;
+  createdBy: { id: string; name: string };
+  lines: { productId: string; productName: string; unitLabel: string; quantity: number }[];
+};
+
 export type StockMovement = {
   id: string;
   productId: string;
