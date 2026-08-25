@@ -319,5 +319,6 @@ model ClinicSettings {
   phone           String?
   email           String?
   expiryAlertDays Int      @default(90)
+  slowMovingDays  Int      @default(30)
   updatedAt       DateTime @updatedAt
 }

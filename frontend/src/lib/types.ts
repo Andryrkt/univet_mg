@@ -71,6 +71,7 @@ export type Product = {
   sellUnits: ProductSellUnit[];
   stocks: ProductStock[];
   batches: ProductBatch[];
+  createdAt: string;
 };
 
 export type Animal = {
@@ -164,6 +165,7 @@ export type ClinicSettings = {
   phone: string | null;
   email: string | null;
   expiryAlertDays: number;
+  slowMovingDays: number;
   updatedAt: string;
 };
 

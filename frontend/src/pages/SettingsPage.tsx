@@ -4,7 +4,7 @@ import { useSettings } from "../context/SettingsContext";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 
-const emptyForm = { name: "", tagline: "", address: "", phone: "", email: "", expiryAlertDays: "90" };
+const emptyForm = { name: "", tagline: "", address: "", phone: "", email: "", expiryAlertDays: "90", slowMovingDays: "30" };
 
 export function SettingsPage() {
   const { settings, refresh } = useSettings();
@@ -21,6 +21,7 @@ export function SettingsPage() {
       phone: settings.phone ?? "",
       email: settings.email ?? "",
       expiryAlertDays: String(settings.expiryAlertDays),
+      slowMovingDays: String(settings.slowMovingDays),
     });
   }, [settings]);
 
@@ -37,6 +38,7 @@ export function SettingsPage() {
         phone: form.phone || null,
         email: form.email || null,
         expiryAlertDays: Number(form.expiryAlertDays),
+        slowMovingDays: Number(form.slowMovingDays),
       });
       await refresh();
       setSuccess(true);
@@ -84,6 +86,14 @@ export function SettingsPage() {
           required
           value={form.expiryAlertDays}
           onChange={(e) => setForm({ ...form, expiryAlertDays: e.target.value })}
+        />
+        <Input
+          label="Produits peu vendus (jours sans vente pris en compte)"
+          type="number"
+          min="1"
+          required
+          value={form.slowMovingDays}
+          onChange={(e) => setForm({ ...form, slowMovingDays: e.target.value })}
         />
         <div className="flex justify-end pt-2">
           <Button type="submit" disabled={saving}>

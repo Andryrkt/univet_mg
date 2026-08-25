@@ -31,6 +31,7 @@ export async function PATCH(request: Request) {
     }
 
     const expiryAlertDays = Number(body.expiryAlertDays);
+    const slowMovingDays = Number(body.slowMovingDays);
 
     const data = {
       name: body.name,
@@ -39,6 +40,7 @@ export async function PATCH(request: Request) {
       phone: body.phone || null,
       email: body.email || null,
       expiryAlertDays: Number.isFinite(expiryAlertDays) && expiryAlertDays > 0 ? expiryAlertDays : 90,
+      slowMovingDays: Number.isFinite(slowMovingDays) && slowMovingDays > 0 ? slowMovingDays : 30,
     };
 
     const settings = await prisma.clinicSettings.upsert({
