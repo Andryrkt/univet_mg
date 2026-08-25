@@ -12,6 +12,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         seller: { select: { id: true, name: true } },
         location: true,
         items: { include: { product: true } },
+        payments: { include: { createdBy: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } },
       },
     });
     if (!sale) {

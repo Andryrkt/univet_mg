@@ -28,6 +28,12 @@ enum StockMovementType {
   TRANSFER_IN
 }
 
+enum PaymentStatus {
+  PAID
+  PARTIAL
+  UNPAID
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -42,6 +48,7 @@ model User {
   sales                 Sale[]
   stockMovements        StockMovement[]
   stockTransfers        StockTransfer[]
+  payments              Payment[]
 }
 
 // Emplacement / point de vente physique. Le catalogue (produits, catégories,
@@ -207,10 +214,26 @@ model Sale {
   seller      User     @relation(fields: [sellerId], references: [id])
   locationId  String
   location    Location @relation(fields: [locationId], references: [id])
-  totalAmount Decimal  @db.Decimal(10, 2)
-  createdAt   DateTime @default(now())
+  totalAmount   Decimal       @db.Decimal(10, 2)
+  amountPaid    Decimal       @default(0) @db.Decimal(10, 2)
+  paymentStatus PaymentStatus @default(PAID)
+  createdAt     DateTime      @default(now())
 
-  items SaleItem[]
+  items    SaleItem[]
+  payments Payment[]
+}
+
+// Historique des règlements d'une vente : permet les paiements différés/partiels
+// (ex. client sans porte-monnaie qui revient payer plus tard).
+model Payment {
+  id          String   @id @default(cuid())
+  saleId      String
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(10, 2)
+  note        String?
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
 }
 
 model SaleItem {

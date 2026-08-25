@@ -116,6 +116,16 @@ export type SaleItem = {
   subtotal: string;
 };
 
+export type Payment = {
+  id: string;
+  amount: string;
+  note: string | null;
+  createdBy: { id: string; name: string };
+  createdAt: string;
+};
+
+export type PaymentStatus = "PAID" | "PARTIAL" | "UNPAID";
+
 export type Sale = {
   id: string;
   clientId: string;
@@ -125,8 +135,11 @@ export type Sale = {
   locationId: string;
   location: Location;
   totalAmount: string;
+  amountPaid: string;
+  paymentStatus: PaymentStatus;
   createdAt: string;
   items: SaleItem[];
+  payments: Payment[];
 };
 
 export type ClinicSettings = {

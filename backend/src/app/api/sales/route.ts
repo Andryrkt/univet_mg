@@ -12,6 +12,7 @@ export async function GET(request: Request) {
         seller: { select: { id: true, name: true } },
         location: true,
         items: { include: { product: true } },
+        payments: { include: { createdBy: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -95,19 +96,38 @@ export async function POST(request: Request) {
         stockUpdates.push({ productId: item.productId, baseQuantity });
       }
 
+      const amountPaid: Prisma.Decimal =
+        body.amountPaid === undefined || body.amountPaid === null
+          ? totalAmount
+          : new Prisma.Decimal(body.amountPaid);
+      if (amountPaid.lessThan(0) || amountPaid.greaterThan(totalAmount)) {
+        throw new ApiError(400, "Le montant payé doit être compris entre 0 et le total de la vente");
+      }
+      const paymentStatus = amountPaid.greaterThanOrEqualTo(totalAmount)
+        ? "PAID"
+        : amountPaid.greaterThan(0)
+          ? "PARTIAL"
+          : "UNPAID";
+
       const createdSale = await tx.sale.create({
         data: {
           clientId: body.clientId,
           sellerId: user.sub,
           locationId: body.locationId,
           totalAmount,
+          amountPaid,
+          paymentStatus,
           items: { create: saleItemsData },
+          payments: amountPaid.greaterThan(0)
+            ? { create: [{ amount: amountPaid, createdById: user.sub }] }
+            : undefined,
         },
         include: {
           client: true,
           seller: { select: { id: true, name: true } },
           location: true,
           items: { include: { product: true } },
+          payments: { include: { createdBy: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } },
         },
       });
 

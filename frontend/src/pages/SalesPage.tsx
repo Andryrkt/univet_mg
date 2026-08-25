@@ -70,6 +70,9 @@ export function SalesPage() {
   const [clientSaving, setClientSaving] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
 
+  const [paymentMode, setPaymentMode] = useState<"full" | "partial" | "unpaid">("full");
+  const [partialAmount, setPartialAmount] = useState("");
+
   useEffect(() => {
     Promise.all([api.get<Client[]>("/clients"), api.get<Product[]>("/products"), api.get<Location[]>("/locations")])
       .then(([c, p, l]) => {
@@ -114,20 +117,31 @@ export function SalesPage() {
     return sum + (option ? option.unitPrice * line.quantity : 0);
   }, 0);
 
+  const amountPaid =
+    paymentMode === "full" ? total : paymentMode === "unpaid" ? 0 : Number(partialAmount) || 0;
+  const remaining = total - amountPaid;
+
   async function handleSubmit() {
     if (!clientId || !locationId || cart.length === 0) return;
+    if (paymentMode === "partial" && (amountPaid <= 0 || amountPaid >= total)) {
+      setError("Le montant payé partiel doit être compris entre 0 et le total (exclus)");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const sale = await api.post<{ id: string }>("/sales", {
         clientId,
         locationId,
+        amountPaid,
         items: cart.map((l) => {
           const option = options.find((o) => o.key === l.key)!;
           return { productId: option.productId, sellUnitId: option.sellUnitId, quantity: l.quantity };
         }),
       });
       setCart([]);
+      setPaymentMode("full");
+      setPartialAmount("");
       navigate(`/historique-ventes?sale=${sale.id}`);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur lors de la vente");
@@ -268,6 +282,53 @@ export function SalesPage() {
             <span>Total</span>
             <span>{formatAmount(total)} Ar</span>
           </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Paiement</label>
+            <div className="flex flex-col gap-1.5 text-sm text-slate-700 dark:text-slate-300">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentMode"
+                  checked={paymentMode === "full"}
+                  onChange={() => setPaymentMode("full")}
+                />
+                Payé intégralement
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentMode"
+                  checked={paymentMode === "partial"}
+                  onChange={() => setPaymentMode("partial")}
+                />
+                Paiement partiel (reste dû)
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="paymentMode"
+                  checked={paymentMode === "unpaid"}
+                  onChange={() => setPaymentMode("unpaid")}
+                />
+                Client sans porte-monnaie — à crédit
+              </label>
+            </div>
+            {paymentMode === "partial" && (
+              <Input
+                label="Montant payé maintenant"
+                type="number"
+                min="0"
+                max={total}
+                value={partialAmount}
+                onChange={(e) => setPartialAmount(e.target.value)}
+              />
+            )}
+            {paymentMode !== "full" && (
+              <p className="text-sm text-amber-600 dark:text-amber-400">Reste à payer : {formatAmount(remaining)} Ar</p>
+            )}
+          </div>
+
           {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
           <Button className="w-full" onClick={handleSubmit} disabled={saving || !clientId || !locationId || cart.length === 0}>
             {saving ? "Validation…" : "Valider la vente"}
