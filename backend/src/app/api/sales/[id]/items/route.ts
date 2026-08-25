@@ -93,6 +93,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
           ? "PARTIAL"
           : "UNPAID";
 
+      let cashReceived: Prisma.Decimal | undefined;
+      if (body.cashReceived !== undefined && body.cashReceived !== null) {
+        cashReceived = new Prisma.Decimal(body.cashReceived);
+        if (cashReceived.lessThan(additionalPaid)) {
+          throw new ApiError(400, "Le montant reçu ne peut pas être inférieur au montant payé");
+        }
+      }
+
       const updatedSale = await tx.sale.update({
         where: { id: params.id },
         data: {
@@ -101,7 +109,16 @@ export async function POST(request: Request, { params }: { params: { id: string 
           paymentStatus,
           items: { create: saleItemsData },
           payments: additionalPaid.greaterThan(0)
-            ? { create: [{ amount: additionalPaid, note: "Ajout de produits après validation", createdById: user.sub }] }
+            ? {
+                create: [
+                  {
+                    amount: additionalPaid,
+                    cashReceived,
+                    note: "Ajout de produits après validation",
+                    createdById: user.sub,
+                  },
+                ],
+              }
             : undefined,
         },
         include: {

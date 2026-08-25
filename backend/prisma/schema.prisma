@@ -233,14 +233,15 @@ model Sale {
 // Historique des règlements d'une vente : permet les paiements différés/partiels
 // (ex. client sans porte-monnaie qui revient payer plus tard).
 model Payment {
-  id          String   @id @default(cuid())
-  saleId      String
-  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  amount      Decimal  @db.Decimal(10, 2)
-  note        String?
-  createdById String
-  createdBy   User     @relation(fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  saleId       String
+  sale         Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  amount       Decimal  @db.Decimal(10, 2)
+  cashReceived Decimal? @db.Decimal(10, 2)
+  note         String?
+  createdById  String
+  createdBy    User     @relation(fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
 }
 
 model SaleItem {

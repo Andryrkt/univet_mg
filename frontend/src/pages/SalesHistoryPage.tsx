@@ -35,6 +35,7 @@ export function SalesHistoryPage() {
   const [search, setSearch] = useState("");
 
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentCashReceived, setPaymentCashReceived] = useState("");
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
 
@@ -42,6 +43,7 @@ export function SalesHistoryPage() {
   const [addQuantity, setAddQuantity] = useState("1");
   const [addPaymentMode, setAddPaymentMode] = useState<"full" | "partial" | "unpaid">("full");
   const [addPartialAmount, setAddPartialAmount] = useState("");
+  const [addCashReceived, setAddCashReceived] = useState("");
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -73,11 +75,13 @@ export function SalesHistoryPage() {
 
   function resetSaleForms() {
     setPaymentAmount("");
+    setPaymentCashReceived("");
     setPaymentError(null);
     setAddOptionKey("");
     setAddQuantity("1");
     setAddPaymentMode("full");
     setAddPartialAmount("");
+    setAddCashReceived("");
     setAddError(null);
     setCancelError(null);
   }
@@ -94,15 +98,27 @@ export function SalesHistoryPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const paymentAmountValue = Number(paymentAmount) || 0;
+  const paymentChange =
+    paymentCashReceived && paymentAmountValue > 0 ? Math.max(0, Number(paymentCashReceived) - paymentAmountValue) : 0;
+
   async function handleRecordPayment(e: FormEvent) {
     e.preventDefault();
     if (!selected) return;
+    if (paymentCashReceived && Number(paymentCashReceived) < paymentAmountValue) {
+      setPaymentError("Le montant reçu ne peut pas être inférieur au montant payé");
+      return;
+    }
     setPaymentSaving(true);
     setPaymentError(null);
     try {
-      const updated = await api.post<Sale>(`/sales/${selected.id}/payments`, { amount: Number(paymentAmount) });
+      const updated = await api.post<Sale>(`/sales/${selected.id}/payments`, {
+        amount: paymentAmountValue,
+        cashReceived: paymentCashReceived ? Number(paymentCashReceived) : undefined,
+      });
       setSelected(updated);
       setPaymentAmount("");
+      setPaymentCashReceived("");
       await load();
     } catch (e) {
       setPaymentError(e instanceof ApiError ? e.message : "Erreur lors de l'enregistrement du paiement");
@@ -114,6 +130,8 @@ export function SalesHistoryPage() {
   const addOptions = selected ? buildSellOptions(products, selected.location.id) : [];
   const selectedAddOption = addOptions.find((o) => o.key === addOptionKey);
   const addSubtotal = selectedAddOption ? selectedAddOption.unitPrice * (Number(addQuantity) || 0) : 0;
+  const addChange =
+    addPaymentMode === "full" && addCashReceived ? Math.max(0, Number(addCashReceived) - addSubtotal) : 0;
 
   async function handleAddItem(e: FormEvent) {
     e.preventDefault();
@@ -126,18 +144,24 @@ export function SalesHistoryPage() {
       setAddError("Le montant payé partiel doit être compris entre 0 et le sous-total (exclus)");
       return;
     }
+    if (addPaymentMode === "full" && addCashReceived && Number(addCashReceived) < addSubtotal) {
+      setAddError("Le montant reçu ne peut pas être inférieur au sous-total");
+      return;
+    }
     setAddSaving(true);
     setAddError(null);
     try {
       const updated = await api.post<Sale>(`/sales/${selected.id}/items`, {
         items: [{ productId: selectedAddOption.productId, sellUnitId: selectedAddOption.sellUnitId, quantity }],
         amountPaid,
+        cashReceived: addPaymentMode === "full" && addCashReceived ? Number(addCashReceived) : undefined,
       });
       setSelected(updated);
       setAddOptionKey("");
       setAddQuantity("1");
       setAddPaymentMode("full");
       setAddPartialAmount("");
+      setAddCashReceived("");
       await Promise.all([load(), loadProducts()]);
     } catch (e) {
       setAddError(e instanceof ApiError ? e.message : "Erreur lors de l'ajout");
@@ -309,14 +333,24 @@ export function SalesHistoryPage() {
 
               {selected.payments.length > 0 && (
                 <ul className="space-y-1 border-t border-slate-200 dark:border-slate-800 pt-2 text-xs text-slate-500 dark:text-slate-400">
-                  {selected.payments.map((p) => (
-                    <li key={p.id} className="flex items-center justify-between">
-                      <span>
-                        {new Date(p.createdAt).toLocaleString()} · {p.createdBy.name}
-                      </span>
-                      <span>{formatAmount(p.amount)} Ar</span>
-                    </li>
-                  ))}
+                  {selected.payments.map((p) => {
+                    const change = p.cashReceived ? Number(p.cashReceived) - Number(p.amount) : 0;
+                    return (
+                      <li key={p.id} className="flex items-center justify-between">
+                        <span>
+                          {new Date(p.createdAt).toLocaleString()} · {p.createdBy.name}
+                          {p.cashReceived && (
+                            <>
+                              {" "}
+                              (reçu {formatAmount(p.cashReceived)} Ar
+                              {change > 0 ? `, rendu ${formatAmount(change)} Ar` : ""})
+                            </>
+                          )}
+                        </span>
+                        <span>{formatAmount(p.amount)} Ar</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -335,6 +369,23 @@ export function SalesHistoryPage() {
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                 />
+                {paymentAmountValue > 0 && (
+                  <>
+                    <Input
+                      label="Montant reçu (espèces)"
+                      type="number"
+                      min={paymentAmountValue}
+                      placeholder={String(paymentAmountValue)}
+                      value={paymentCashReceived}
+                      onChange={(e) => setPaymentCashReceived(e.target.value)}
+                    />
+                    {paymentChange > 0 && (
+                      <p className="text-sm text-green-600 dark:text-green-400">
+                        Rendu à remettre : {formatAmount(paymentChange)} Ar
+                      </p>
+                    )}
+                  </>
+                )}
                 <Button type="submit" className="w-full" disabled={paymentSaving}>
                   {paymentSaving ? "Enregistrement…" : "Enregistrer le paiement"}
                 </Button>
@@ -405,6 +456,23 @@ export function SalesHistoryPage() {
                         value={addPartialAmount}
                         onChange={(e) => setAddPartialAmount(e.target.value)}
                       />
+                    )}
+                    {addPaymentMode === "full" && (
+                      <>
+                        <Input
+                          label="Montant reçu (espèces)"
+                          type="number"
+                          min={addSubtotal}
+                          placeholder={String(addSubtotal)}
+                          value={addCashReceived}
+                          onChange={(e) => setAddCashReceived(e.target.value)}
+                        />
+                        {addChange > 0 && (
+                          <p className="text-sm text-green-600 dark:text-green-400">
+                            Rendu à remettre : {formatAmount(addChange)} Ar
+                          </p>
+                        )}
+                      </>
                     )}
                   </>
                 )}

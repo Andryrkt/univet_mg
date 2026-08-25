@@ -37,6 +37,8 @@ export function SaleTicketPrintPage() {
 
   const reference = sale.id.slice(-8).toUpperCase();
   const remaining = Number(sale.totalAmount) - Number(sale.amountPaid);
+  const lastPayment = sale.payments[sale.payments.length - 1];
+  const change = lastPayment?.cashReceived ? Number(lastPayment.cashReceived) - Number(lastPayment.amount) : 0;
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0">
@@ -99,6 +101,20 @@ export function SaleTicketPrintPage() {
           </div>
         )}
         <p className="mt-1">Statut : {statusLabel[sale.paymentStatus]}</p>
+        {lastPayment?.cashReceived && (
+          <>
+            <div className="flex justify-between">
+              <span>Reçu</span>
+              <span>{formatAmount(lastPayment.cashReceived)} Ar</span>
+            </div>
+            {change > 0 && (
+              <div className="flex justify-between font-bold">
+                <span>Rendu</span>
+                <span>{formatAmount(change)} Ar</span>
+              </div>
+            )}
+          </>
+        )}
 
         <div className="my-2 border-t border-dashed border-slate-400" />
 

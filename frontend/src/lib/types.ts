@@ -119,6 +119,7 @@ export type SaleItem = {
 export type Payment = {
   id: string;
   amount: string;
+  cashReceived: string | null;
   note: string | null;
   createdBy: { id: string; name: string };
   createdAt: string;

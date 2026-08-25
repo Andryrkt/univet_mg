@@ -13,6 +13,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
     }
     const amount = new Prisma.Decimal(body.amount);
 
+    let cashReceived: Prisma.Decimal | undefined;
+    if (body.cashReceived !== undefined && body.cashReceived !== null) {
+      cashReceived = new Prisma.Decimal(body.cashReceived);
+      if (cashReceived.lessThan(amount)) {
+        return NextResponse.json({ error: "Le montant reçu ne peut pas être inférieur au montant payé" }, { status: 400 });
+      }
+    }
+
     const sale = await prisma.$transaction(async (tx) => {
       const existing = await tx.sale.findUnique({ where: { id: params.id } });
       if (!existing) {
@@ -38,7 +46,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         data: {
           amountPaid: newAmountPaid,
           paymentStatus,
-          payments: { create: [{ amount, note: body.note || null, createdById: user.sub }] },
+          payments: { create: [{ amount, cashReceived, note: body.note || null, createdById: user.sub }] },
         },
         include: {
           client: true,

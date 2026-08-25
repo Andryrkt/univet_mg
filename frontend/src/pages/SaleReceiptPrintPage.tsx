@@ -37,6 +37,8 @@ export function SaleReceiptPrintPage() {
 
   const reference = sale.id.slice(-8).toUpperCase();
   const remaining = Number(sale.totalAmount) - Number(sale.amountPaid);
+  const lastPayment = sale.payments[sale.payments.length - 1];
+  const change = lastPayment?.cashReceived ? Number(lastPayment.cashReceived) - Number(lastPayment.amount) : 0;
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 print:bg-white print:py-0">
@@ -126,6 +128,20 @@ export function SaleReceiptPrintPage() {
               <span>Statut</span>
               <span>{statusLabel[sale.paymentStatus]}</span>
             </div>
+            {lastPayment?.cashReceived && (
+              <>
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>Reçu</span>
+                  <span>{formatAmount(lastPayment.cashReceived)} Ar</span>
+                </div>
+                {change > 0 && (
+                  <div className="flex justify-between text-sm font-semibold text-slate-900">
+                    <span>Rendu</span>
+                    <span>{formatAmount(change)} Ar</span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
 
