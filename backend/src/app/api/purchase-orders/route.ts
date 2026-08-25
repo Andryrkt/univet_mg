@@ -9,7 +9,7 @@ export async function GET(request: Request) {
       include: {
         supplier: true,
         createdBy: { select: { id: true, name: true } },
-        items: { include: { product: true } },
+        items: { include: { product: { include: { unit: true } } } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
           })),
         },
       },
-      include: { supplier: true, items: { include: { product: true } } },
+      include: { supplier: true, items: { include: { product: { include: { unit: true } } } } },
     });
 
     return NextResponse.json(order, { status: 201 });

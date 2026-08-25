@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
 import type { PurchaseOrder } from "../lib/types";
 import { Button } from "../components/ui/Button";
@@ -113,6 +113,9 @@ export function PurchaseOrderDetailPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link to={`/commandes/${order.id}/imprimer`} target="_blank" rel="noopener noreferrer">
+            <Button variant="secondary">Générer le bon de commande</Button>
+          </Link>
           {order.status === "PENDING" && (
             <Button variant="secondary" onClick={handleCancel} disabled={saving}>
               Annuler la commande

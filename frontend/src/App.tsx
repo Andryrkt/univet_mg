@@ -9,6 +9,7 @@ import { UnitsPage } from "./pages/UnitsPage";
 import { SuppliersPage } from "./pages/SuppliersPage";
 import { PurchaseOrdersPage } from "./pages/PurchaseOrdersPage";
 import { PurchaseOrderDetailPage } from "./pages/PurchaseOrderDetailPage";
+import { PurchaseOrderPrintPage } from "./pages/PurchaseOrderPrintPage";
 import { ClientsPage } from "./pages/ClientsPage";
 import { ClientDetailPage } from "./pages/ClientDetailPage";
 import { SalesPage } from "./pages/SalesPage";
@@ -20,6 +21,14 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/commandes/:id/imprimer"
+        element={
+          <ProtectedRoute roles={["ADMIN", "MODERATOR"]}>
+            <PurchaseOrderPrintPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         element={
           <ProtectedRoute>

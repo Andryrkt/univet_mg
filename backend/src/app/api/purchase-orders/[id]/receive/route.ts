@@ -14,7 +14,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     const order = await prisma.purchaseOrder.findUnique({
       where: { id: params.id },
-      include: { items: { include: { product: true } } },
+      include: { items: { include: { product: { include: { unit: true } } } } },
     });
 
     if (!order) throw new ApiError(404, "Commande introuvable");
@@ -72,7 +72,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return tx.purchaseOrder.update({
         where: { id: order.id },
         data: fullyReceived ? { status: "RECEIVED", receivedAt: new Date() } : { status: "PARTIALLY_RECEIVED" },
-        include: { supplier: true, items: { include: { product: true } } },
+        include: { supplier: true, items: { include: { product: { include: { unit: true } } } } },
       });
     }, { timeout: 15000 });
 
