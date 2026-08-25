@@ -4,6 +4,7 @@ import { api, ApiError } from "../lib/api";
 import { useSettings } from "../context/SettingsContext";
 import type { PurchaseOrder, ReceptionBatch } from "../lib/types";
 import { Button } from "../components/ui/Button";
+import { formatAmount } from "../lib/format";
 
 export function PurchaseOrderReceptionPrintPage() {
   const { id } = useParams<{ id: string }>();
@@ -99,8 +100,8 @@ export function PurchaseOrderReceptionPrintPage() {
                   <td className="py-2 text-right text-slate-700">
                     {line.quantity} {line.unitLabel}
                   </td>
-                  <td className="py-2 text-right text-slate-700">{unitPrice.toFixed(2)} Ar</td>
-                  <td className="py-2 text-right text-slate-700">{(unitPrice * line.quantity).toFixed(2)} Ar</td>
+                  <td className="py-2 text-right text-slate-700">{formatAmount(unitPrice)} Ar</td>
+                  <td className="py-2 text-right text-slate-700">{formatAmount(unitPrice * line.quantity)} Ar</td>
                 </tr>
               );
             })}
@@ -111,7 +112,7 @@ export function PurchaseOrderReceptionPrintPage() {
           <div className="w-56">
             <div className="flex justify-between border-t-2 border-slate-800 py-2 text-base font-bold text-slate-900">
               <span>Total reçu</span>
-              <span>{total.toFixed(2)} Ar</span>
+              <span>{formatAmount(total)} Ar</span>
             </div>
           </div>
         </div>

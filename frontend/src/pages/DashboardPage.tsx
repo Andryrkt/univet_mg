@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import type { Product, Sale } from "../lib/types";
+import { formatAmount } from "../lib/format";
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
@@ -52,7 +53,7 @@ export function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard label="Produits actifs" value={activeProducts.length} />
         <StatCard label="Ventes aujourd'hui" value={salesToday.length} />
-        <StatCard label="Chiffre d'affaires du jour" value={`${totalToday.toFixed(2)} Ar`} />
+        <StatCard label="Chiffre d'affaires du jour" value={`${formatAmount(totalToday)} Ar`} />
       </div>
 
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">

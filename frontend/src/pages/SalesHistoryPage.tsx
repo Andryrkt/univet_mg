@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
 import type { Sale } from "../lib/types";
 import { Modal } from "../components/ui/Modal";
+import { formatAmount } from "../lib/format";
 
 export function SalesHistoryPage() {
   const [searchParams] = useSearchParams();
@@ -60,7 +61,7 @@ export function SalesHistoryPage() {
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{s.location.name}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{s.seller.name}</td>
                   <td className="px-4 py-2 text-right font-medium text-slate-900 dark:text-slate-100">
-                    {Number(s.totalAmount).toFixed(2)} Ar
+                    {formatAmount(s.totalAmount)} Ar
                   </td>
                 </tr>
               ))
@@ -82,13 +83,13 @@ export function SalesHistoryPage() {
                   <span>
                     {item.product.name} × {item.quantity} {item.unitLabel}
                   </span>
-                  <span className="font-medium">{Number(item.subtotal).toFixed(2)} Ar</span>
+                  <span className="font-medium">{formatAmount(item.subtotal)} Ar</span>
                 </li>
               ))}
             </ul>
             <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 pt-2 font-semibold text-slate-900 dark:text-slate-100">
               <span>Total</span>
-              <span>{Number(selected.totalAmount).toFixed(2)} Ar</span>
+              <span>{formatAmount(selected.totalAmount)} Ar</span>
             </div>
           </div>
         )}

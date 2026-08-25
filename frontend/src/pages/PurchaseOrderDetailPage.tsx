@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
 import type { PurchaseOrder, ReceptionBatch } from "../lib/types";
+import { formatAmount } from "../lib/format";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 
@@ -162,7 +163,7 @@ export function PurchaseOrderDetailPage() {
                 <tr key={item.id}>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{item.product.name}</td>
                   <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{item.quantityOrdered}</td>
-                  <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{Number(item.unitPrice).toFixed(2)}</td>
+                  <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{formatAmount(item.unitPrice)}</td>
                   <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{item.quantityReceived}</td>
                   <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{remaining}</td>
                   {canReceive && (
@@ -190,7 +191,7 @@ export function PurchaseOrderDetailPage() {
               <td colSpan={canReceive ? 5 : 4} className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">
                 Total commandé
               </td>
-              <td className="px-4 py-2 text-right font-semibold text-slate-900 dark:text-slate-100">{total.toFixed(2)} Ar</td>
+              <td className="px-4 py-2 text-right font-semibold text-slate-900 dark:text-slate-100">{formatAmount(total)} Ar</td>
             </tr>
           </tfoot>
         </table>

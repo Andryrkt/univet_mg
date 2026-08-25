@@ -4,6 +4,7 @@ import { api, ApiError } from "../lib/api";
 import type { Client, Location, Product } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Select";
+import { formatAmount } from "../lib/format";
 
 type SellOption = {
   key: string;
@@ -143,7 +144,7 @@ export function SalesPage() {
           <option value="">Ajouter un produit…</option>
           {options.map((o) => (
             <option key={o.key} value={o.key} disabled={o.maxQuantity <= 0}>
-              {o.productName} — {o.unitPrice.toFixed(2)} Ar ({o.unitLabel}, stock: {o.maxQuantity})
+              {o.productName} — {formatAmount(o.unitPrice)} Ar ({o.unitLabel}, stock: {o.maxQuantity})
             </option>
           ))}
         </Select>
@@ -175,7 +176,7 @@ export function SalesPage() {
                       <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
                         {option.productName} <span className="text-xs text-slate-400 dark:text-slate-500">({option.unitLabel})</span>
                       </td>
-                      <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{option.unitPrice.toFixed(2)}</td>
+                      <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{formatAmount(option.unitPrice)}</td>
                       <td className="px-4 py-2 text-right">
                         <input
                           type="number"
@@ -187,7 +188,7 @@ export function SalesPage() {
                         />
                       </td>
                       <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">
-                        {(option.unitPrice * line.quantity).toFixed(2)}
+                        {formatAmount(option.unitPrice * line.quantity)}
                       </td>
                       <td className="px-4 py-2 text-right">
                         <button onClick={() => removeLine(line.key)} className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
@@ -219,7 +220,7 @@ export function SalesPage() {
         <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
           <div className="flex items-center justify-between text-lg font-semibold text-slate-900 dark:text-slate-100">
             <span>Total</span>
-            <span>{total.toFixed(2)} Ar</span>
+            <span>{formatAmount(total)} Ar</span>
           </div>
           {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
           <Button className="w-full" onClick={handleSubmit} disabled={saving || !clientId || !locationId || cart.length === 0}>

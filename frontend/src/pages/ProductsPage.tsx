@@ -3,6 +3,7 @@ import { api, ApiError } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import type { Product, Category, Unit, Location } from "../lib/types";
 import { buildCategoryTree } from "../lib/categoryTree";
+import { formatAmount } from "../lib/format";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
@@ -240,8 +241,8 @@ export function ProductsPage() {
                   {p.category.name}
                 </td>
                 <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{p.unit.name}</td>
-                <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{Number(p.purchasePrice).toFixed(2)}</td>
-                <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{Number(p.sellingPrice).toFixed(2)}</td>
+                <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{formatAmount(p.purchasePrice)}</td>
+                <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{formatAmount(p.sellingPrice)}</td>
                 <td
                   className={`px-4 py-2 text-right font-medium ${
                     totalStock(p) <= p.alertThreshold ? "text-red-600 dark:text-red-400" : "text-slate-700 dark:text-slate-300"
@@ -414,7 +415,7 @@ export function ProductsPage() {
           <div className="space-y-4">
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Unité de stock : <span className="font-medium">{sellUnitsTarget.unit.name}</span> — prix de base{" "}
-              {Number(sellUnitsTarget.sellingPrice).toFixed(2)} Ar / {sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name}
+              {formatAmount(sellUnitsTarget.sellingPrice)} Ar / {sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name}
             </p>
 
             {sellUnitsTarget.sellUnits.length > 0 && (
@@ -423,7 +424,7 @@ export function ProductsPage() {
                   <li key={su.id} className="flex items-center justify-between px-3 py-2 text-sm">
                     <span className="text-slate-700 dark:text-slate-300">
                       {su.unit.name} = {su.conversionFactor} {sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name} —{" "}
-                      {Number(su.sellingPrice).toFixed(2)} Ar
+                      {formatAmount(su.sellingPrice)} Ar
                     </span>
                     <button onClick={() => handleDeleteSellUnit(su.id)} className="text-sm text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300">
                       Supprimer

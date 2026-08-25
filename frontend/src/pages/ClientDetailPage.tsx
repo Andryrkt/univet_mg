@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
 import type { ClientDetail } from "../lib/types";
+import { formatAmount } from "../lib/format";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
@@ -99,7 +100,7 @@ export function ClientDetailPage() {
             {client.sales.map((s) => (
               <li key={s.id} className="flex items-center justify-between py-2 text-sm">
                 <span className="text-slate-700 dark:text-slate-300">{new Date(s.createdAt).toLocaleString()}</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">{Number(s.totalAmount).toFixed(2)} Ar</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">{formatAmount(s.totalAmount)} Ar</span>
               </li>
             ))}
           </ul>
