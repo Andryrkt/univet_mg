@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
+import { useSettings } from "../context/SettingsContext";
 import type { PurchaseOrder, ReceptionBatch } from "../lib/types";
 import { Button } from "../components/ui/Button";
 
@@ -9,6 +10,7 @@ export function PurchaseOrderReceptionPrintPage() {
   const [searchParams] = useSearchParams();
   const at = searchParams.get("at");
   const navigate = useNavigate();
+  const { settings } = useSettings();
 
   const [order, setOrder] = useState<PurchaseOrder | null>(null);
   const [batch, setBatch] = useState<ReceptionBatch | null>(null);
@@ -54,8 +56,10 @@ export function PurchaseOrderReceptionPrintPage() {
       <div className="mx-auto max-w-3xl bg-white p-10 shadow-sm print:shadow-none">
         <div className="mb-8 flex items-start justify-between border-b border-slate-200 pb-6">
           <div>
-            <h1 className="text-lg font-bold text-slate-900">Univet MG</h1>
-            <p className="text-sm text-slate-500">Cabinet vétérinaire — Gestion de stock &amp; ventes</p>
+            <h1 className="text-lg font-bold text-slate-900">{settings.name}</h1>
+            {settings.tagline && <p className="text-sm text-slate-500">{settings.tagline}</p>}
+            {settings.address && <p className="text-sm text-slate-500">{settings.address}</p>}
+            {settings.phone && <p className="text-sm text-slate-500">{settings.phone}</p>}
           </div>
           <div className="text-right">
             <h2 className="text-xl font-bold uppercase tracking-wide text-slate-900">Bon de réception</h2>

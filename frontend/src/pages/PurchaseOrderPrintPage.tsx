@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
+import { useSettings } from "../context/SettingsContext";
 import type { PurchaseOrder } from "../lib/types";
 import { Button } from "../components/ui/Button";
 
 export function PurchaseOrderPrintPage() {
   const { id } = useParams<{ id: string }>();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const [order, setOrder] = useState<PurchaseOrder | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,8 +43,10 @@ export function PurchaseOrderPrintPage() {
       <div className="mx-auto max-w-3xl bg-white p-10 shadow-sm print:shadow-none">
         <div className="mb-8 flex items-start justify-between border-b border-slate-200 pb-6">
           <div>
-            <h1 className="text-lg font-bold text-slate-900">Univet MG</h1>
-            <p className="text-sm text-slate-500">Cabinet vétérinaire — Gestion de stock &amp; ventes</p>
+            <h1 className="text-lg font-bold text-slate-900">{settings.name}</h1>
+            {settings.tagline && <p className="text-sm text-slate-500">{settings.tagline}</p>}
+            {settings.address && <p className="text-sm text-slate-500">{settings.address}</p>}
+            {settings.phone && <p className="text-sm text-slate-500">{settings.phone}</p>}
           </div>
           <div className="text-right">
             <h2 className="text-xl font-bold uppercase tracking-wide text-slate-900">Bon de commande</h2>
@@ -103,7 +107,7 @@ export function PurchaseOrderPrintPage() {
         <div className="mt-12 grid grid-cols-2 gap-6 text-sm text-slate-500">
           <div>
             <p className="mb-8">Signature du cabinet</p>
-            <p className="border-t border-slate-300 pt-1">Univet MG</p>
+            <p className="border-t border-slate-300 pt-1">{settings.name}</p>
           </div>
           <div>
             <p className="mb-8">Signature du fournisseur</p>

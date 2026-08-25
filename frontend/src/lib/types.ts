@@ -98,6 +98,16 @@ export type Sale = {
   items: SaleItem[];
 };
 
+export type ClinicSettings = {
+  id: string;
+  name: string;
+  tagline: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  updatedAt: string;
+};
+
 export type ReceptionBatch = {
   createdAt: string;
   createdBy: { id: string; name: string };

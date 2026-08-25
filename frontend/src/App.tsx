@@ -17,6 +17,7 @@ import { SalesPage } from "./pages/SalesPage";
 import { SalesHistoryPage } from "./pages/SalesHistoryPage";
 import { StockMovementsPage } from "./pages/StockMovementsPage";
 import { UsersPage } from "./pages/UsersPage";
+import { SettingsPage } from "./pages/SettingsPage";
 
 function App() {
   return (
@@ -104,6 +105,14 @@ function App() {
           element={
             <ProtectedRoute roles={["ADMIN"]}>
               <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/parametres"
+          element={
+            <ProtectedRoute roles={["ADMIN"]}>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />

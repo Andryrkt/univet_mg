@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useSettings } from "../../context/SettingsContext";
 import type { Role } from "../../lib/types";
 
 type NavItem = { to: string; label: string; roles?: Role[]; end?: boolean };
@@ -16,10 +18,17 @@ const navItems: NavItem[] = [
   { to: "/historique-ventes", label: "Historique des ventes" },
   { to: "/mouvements-stock", label: "Mouvements de stock", roles: ["ADMIN", "MODERATOR"] },
   { to: "/utilisateurs", label: "Utilisateurs", roles: ["ADMIN"] },
+  { to: "/parametres", label: "Paramètres", roles: ["ADMIN"] },
 ];
 
 export function AppLayout() {
   const { user, logout } = useAuth();
+  const { settings } = useSettings();
+
+  useEffect(() => {
+    document.title = settings.name;
+  }, [settings.name]);
+
   if (!user) return null;
 
   const items = navItems.filter((item) => !item.roles || item.roles.includes(user.role));
@@ -28,8 +37,8 @@ export function AppLayout() {
     <div className="flex min-h-screen bg-slate-50">
       <aside className="w-64 shrink-0 border-r border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-4 py-4">
-          <p className="text-lg font-bold text-slate-900">Univet MG</p>
-          <p className="text-xs text-slate-500">Gestion de stock &amp; ventes</p>
+          <p className="text-lg font-bold text-slate-900">{settings.name}</p>
+          {settings.tagline && <p className="text-xs text-slate-500">{settings.tagline}</p>}
         </div>
         <nav className="flex flex-col gap-1 p-3">
           {items.map((item) => (

@@ -180,3 +180,15 @@ model StockMovement {
   createdBy     User               @relation(fields: [createdById], references: [id])
   createdAt     DateTime           @default(now())
 }
+
+// Ligne unique (singleton, id fixe) : informations du cabinet affichées dans
+// l'interface et sur les documents imprimés (bons de commande/réception).
+model ClinicSettings {
+  id        String   @id @default("singleton")
+  name      String   @default("Univet MG")
+  tagline   String?  @default("Cabinet vétérinaire — Gestion de stock & ventes")
+  address   String?
+  phone     String?
+  email     String?
+  updatedAt DateTime @updatedAt
+}
