@@ -1,10 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
 import type { Client, Location, Product } from "../lib/types";
 import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { Modal } from "../components/ui/Modal";
+import { PlusIcon } from "../components/ui/icons";
 import { formatAmount } from "../lib/format";
+
+const emptyClientForm = { name: "", phone: "", email: "", address: "" };
 
 type SellOption = {
   key: string;
@@ -59,6 +64,11 @@ export function SalesPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [clientForm, setClientForm] = useState(emptyClientForm);
+  const [clientSaving, setClientSaving] = useState(false);
+  const [clientError, setClientError] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([api.get<Client[]>("/clients"), api.get<Product[]>("/products"), api.get<Location[]>("/locations")])
@@ -123,6 +133,32 @@ export function SalesPage() {
       setError(e instanceof ApiError ? e.message : "Erreur lors de la vente");
     } finally {
       setSaving(false);
+    }
+  }
+
+  function openClientModal() {
+    setClientForm(emptyClientForm);
+    setClientError(null);
+    setClientModalOpen(true);
+  }
+
+  async function handleCreateClient(e: FormEvent) {
+    e.preventDefault();
+    setClientSaving(true);
+    setClientError(null);
+    try {
+      const newClient = await api.post<Client>("/clients", {
+        ...clientForm,
+        email: clientForm.email || null,
+        address: clientForm.address || null,
+      });
+      setClients((prev) => [...prev, newClient]);
+      setClientId(newClient.id);
+      setClientModalOpen(false);
+    } catch (e) {
+      setClientError(e instanceof ApiError ? e.message : "Erreur d'enregistrement");
+    } finally {
+      setClientSaving(false);
     }
   }
 
@@ -206,7 +242,17 @@ export function SalesPage() {
 
       <div className="space-y-4">
         <div className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
-          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Client</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">Client</h2>
+            <button
+              type="button"
+              onClick={openClientModal}
+              className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+            >
+              <PlusIcon className="h-3.5 w-3.5" />
+              Nouveau client
+            </button>
+          </div>
           <Select label="Client" required value={clientId} onChange={(e) => setClientId(e.target.value)}>
             <option value="">Sélectionner…</option>
             {clients.map((c) => (
@@ -228,6 +274,45 @@ export function SalesPage() {
           </Button>
         </div>
       </div>
+
+      <Modal open={clientModalOpen} onClose={() => setClientModalOpen(false)} title="Nouveau client">
+        <form onSubmit={handleCreateClient} className="space-y-3">
+          {clientError && (
+            <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{clientError}</p>
+          )}
+          <Input
+            label="Nom"
+            required
+            value={clientForm.name}
+            onChange={(e) => setClientForm({ ...clientForm, name: e.target.value })}
+          />
+          <Input
+            label="Téléphone"
+            required
+            value={clientForm.phone}
+            onChange={(e) => setClientForm({ ...clientForm, phone: e.target.value })}
+          />
+          <Input
+            label="Email"
+            type="email"
+            value={clientForm.email}
+            onChange={(e) => setClientForm({ ...clientForm, email: e.target.value })}
+          />
+          <Input
+            label="Adresse"
+            value={clientForm.address}
+            onChange={(e) => setClientForm({ ...clientForm, address: e.target.value })}
+          />
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={() => setClientModalOpen(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={clientSaving}>
+              {clientSaving ? "Enregistrement…" : "Créer et sélectionner"}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
