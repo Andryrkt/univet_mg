@@ -26,6 +26,7 @@ enum StockMovementType {
   ADJUSTMENT
   TRANSFER_OUT
   TRANSFER_IN
+  SALE_CANCELLATION
 }
 
 enum PaymentStatus {
@@ -49,6 +50,7 @@ model User {
   stockMovements        StockMovement[]
   stockTransfers        StockTransfer[]
   payments              Payment[]
+  cancelledSales        Sale[]          @relation("SaleCancelledBy")
 }
 
 // Emplacement / point de vente physique. Le catalogue (produits, catégories,
@@ -218,6 +220,11 @@ model Sale {
   amountPaid    Decimal       @default(0) @db.Decimal(10, 2)
   paymentStatus PaymentStatus @default(PAID)
   createdAt     DateTime      @default(now())
+
+  cancelledAt   DateTime?
+  cancelledById String?
+  cancelledBy   User?     @relation("SaleCancelledBy", fields: [cancelledById], references: [id])
+  cancelReason  String?
 
   items    SaleItem[]
   payments Payment[]

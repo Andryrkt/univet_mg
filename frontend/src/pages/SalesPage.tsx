@@ -11,7 +11,7 @@ import { formatAmount } from "../lib/format";
 
 const emptyClientForm = { name: "", phone: "", email: "", address: "" };
 
-type SellOption = {
+export type SellOption = {
   key: string;
   productId: string;
   sellUnitId?: string;
@@ -24,7 +24,7 @@ type SellOption = {
 
 type CartLine = { key: string; quantity: number };
 
-function buildSellOptions(products: Product[], locationId: string): SellOption[] {
+export function buildSellOptions(products: Product[], locationId: string): SellOption[] {
   const options: SellOption[] = [];
   for (const p of products) {
     const stockAtLocation = p.stocks.find((s) => s.locationId === locationId)?.quantity ?? 0;

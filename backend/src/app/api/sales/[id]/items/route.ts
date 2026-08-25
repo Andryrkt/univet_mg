@@ -3,38 +3,17 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
 
-export async function GET(request: Request) {
-  try {
-    await requireRole(request, ["ADMIN", "MODERATOR", "SELLER"]);
-    const sales = await prisma.sale.findMany({
-      include: {
-        client: true,
-        seller: { select: { id: true, name: true } },
-        location: true,
-        items: { include: { product: true } },
-        payments: { include: { createdBy: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } },
-        cancelledBy: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
-    return NextResponse.json(sales);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
-
 type SaleItemInput = { productId: string; quantity: number; sellUnitId?: string };
 
-export async function POST(request: Request) {
+export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
     const user = await requireRole(request, ["ADMIN", "MODERATOR", "SELLER"]);
     const body = await request.json();
     const items = body.items as SaleItemInput[] | undefined;
 
-    if (!body.clientId || !body.locationId || !items?.length) {
-      return NextResponse.json({ error: "clientId, locationId et items sont requis" }, { status: 400 });
+    if (!items?.length) {
+      return NextResponse.json({ error: "items est requis" }, { status: 400 });
     }
-
     for (const item of items) {
       if (!item.productId || !item.quantity || item.quantity <= 0) {
         return NextResponse.json({ error: "Chaque ligne nécessite productId et quantity > 0" }, { status: 400 });
@@ -42,7 +21,15 @@ export async function POST(request: Request) {
     }
 
     const sale = await prisma.$transaction(async (tx) => {
-      let totalAmount = new Prisma.Decimal(0);
+      const existingSale = await tx.sale.findUnique({ where: { id: params.id } });
+      if (!existingSale) {
+        throw new ApiError(404, "Vente introuvable");
+      }
+      if (existingSale.cancelledAt) {
+        throw new ApiError(400, "Impossible d'ajouter des produits à une vente annulée");
+      }
+
+      let addedAmount = new Prisma.Decimal(0);
       const saleItemsData: {
         productId: string;
         quantity: number;
@@ -78,7 +65,7 @@ export async function POST(request: Request) {
         const baseQuantity = item.quantity * conversionFactor;
 
         const stock = await tx.productStock.findUnique({
-          where: { productId_locationId: { productId: item.productId, locationId: body.locationId } },
+          where: { productId_locationId: { productId: item.productId, locationId: existingSale.locationId } },
         });
         const availableQuantity = stock?.quantity ?? 0;
         if (availableQuantity < baseQuantity) {
@@ -86,41 +73,35 @@ export async function POST(request: Request) {
         }
 
         const subtotal = unitPrice.mul(item.quantity);
-        totalAmount = totalAmount.add(subtotal);
-        saleItemsData.push({
-          productId: item.productId,
-          quantity: item.quantity,
-          unitLabel,
-          unitPrice,
-          subtotal,
-        });
+        addedAmount = addedAmount.add(subtotal);
+        saleItemsData.push({ productId: item.productId, quantity: item.quantity, unitLabel, unitPrice, subtotal });
         stockUpdates.push({ productId: item.productId, baseQuantity });
       }
 
-      const amountPaid: Prisma.Decimal =
+      const newTotalAmount = existingSale.totalAmount.add(addedAmount);
+      const additionalPaid: Prisma.Decimal =
         body.amountPaid === undefined || body.amountPaid === null
-          ? totalAmount
+          ? addedAmount
           : new Prisma.Decimal(body.amountPaid);
-      if (amountPaid.lessThan(0) || amountPaid.greaterThan(totalAmount)) {
-        throw new ApiError(400, "Le montant payé doit être compris entre 0 et le total de la vente");
+      if (additionalPaid.lessThan(0) || additionalPaid.greaterThan(addedAmount)) {
+        throw new ApiError(400, "Le montant payé pour cet ajout doit être compris entre 0 et le montant ajouté");
       }
-      const paymentStatus = amountPaid.greaterThanOrEqualTo(totalAmount)
+      const newAmountPaid = existingSale.amountPaid.add(additionalPaid);
+      const paymentStatus = newAmountPaid.greaterThanOrEqualTo(newTotalAmount)
         ? "PAID"
-        : amountPaid.greaterThan(0)
+        : newAmountPaid.greaterThan(0)
           ? "PARTIAL"
           : "UNPAID";
 
-      const createdSale = await tx.sale.create({
+      const updatedSale = await tx.sale.update({
+        where: { id: params.id },
         data: {
-          clientId: body.clientId,
-          sellerId: user.sub,
-          locationId: body.locationId,
-          totalAmount,
-          amountPaid,
+          totalAmount: newTotalAmount,
+          amountPaid: newAmountPaid,
           paymentStatus,
           items: { create: saleItemsData },
-          payments: amountPaid.greaterThan(0)
-            ? { create: [{ amount: amountPaid, createdById: user.sub }] }
+          payments: additionalPaid.greaterThan(0)
+            ? { create: [{ amount: additionalPaid, note: "Ajout de produits après validation", createdById: user.sub }] }
             : undefined,
         },
         include: {
@@ -135,24 +116,24 @@ export async function POST(request: Request) {
 
       for (const update of stockUpdates) {
         await tx.productStock.update({
-          where: { productId_locationId: { productId: update.productId, locationId: body.locationId } },
+          where: { productId_locationId: { productId: update.productId, locationId: existingSale.locationId } },
           data: { quantity: { decrement: update.baseQuantity } },
         });
 
         await tx.stockMovement.create({
           data: {
             productId: update.productId,
-            locationId: body.locationId,
+            locationId: existingSale.locationId,
             type: "SALE",
             quantity: -update.baseQuantity,
             referenceType: "Sale",
-            referenceId: createdSale.id,
+            referenceId: updatedSale.id,
             createdById: user.sub,
           },
         });
       }
 
-      return createdSale;
+      return updatedSale;
     }, { timeout: 15000 });
 
     return NextResponse.json(sale, { status: 201 });

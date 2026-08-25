@@ -140,6 +140,9 @@ export type Sale = {
   createdAt: string;
   items: SaleItem[];
   payments: Payment[];
+  cancelledAt: string | null;
+  cancelledBy: { id: string; name: string } | null;
+  cancelReason: string | null;
 };
 
 export type ClinicSettings = {

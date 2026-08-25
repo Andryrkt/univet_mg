@@ -1,12 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
-import type { Sale } from "../lib/types";
+import type { Product, Sale } from "../lib/types";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
+import { Select } from "../components/ui/Select";
 import { Button } from "../components/ui/Button";
 import { formatAmount } from "../lib/format";
 import { SearchInput } from "../components/ui/SearchInput";
+import { useAuth } from "../context/AuthContext";
+import { buildSellOptions } from "./SalesPage";
 
 const statusLabel: Record<Sale["paymentStatus"], string> = {
   PAID: "Payé",
@@ -21,8 +24,11 @@ const statusClass: Record<Sale["paymentStatus"], string> = {
 };
 
 export function SalesHistoryPage() {
+  const { user } = useAuth();
+  const canManage = user?.role === "ADMIN" || user?.role === "MODERATOR";
   const [searchParams] = useSearchParams();
   const [sales, setSales] = useState<Sale[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Sale | null>(null);
@@ -31,6 +37,16 @@ export function SalesHistoryPage() {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const [addOptionKey, setAddOptionKey] = useState("");
+  const [addQuantity, setAddQuantity] = useState("1");
+  const [addPaymentMode, setAddPaymentMode] = useState<"full" | "partial" | "unpaid">("full");
+  const [addPartialAmount, setAddPartialAmount] = useState("");
+  const [addSaving, setAddSaving] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+
+  const [cancelSaving, setCancelSaving] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   async function load(showSpinner = false) {
     if (showSpinner) setLoading(true);
@@ -46,6 +62,26 @@ export function SalesHistoryPage() {
     }
   }
 
+  async function loadProducts() {
+    try {
+      const data = await api.get<Product[]>("/products");
+      setProducts(data.filter((p) => p.isActive));
+    } catch {
+      // Non bloquant : le formulaire d'ajout de produits sera simplement vide.
+    }
+  }
+
+  function resetSaleForms() {
+    setPaymentAmount("");
+    setPaymentError(null);
+    setAddOptionKey("");
+    setAddQuantity("1");
+    setAddPaymentMode("full");
+    setAddPartialAmount("");
+    setAddError(null);
+    setCancelError(null);
+  }
+
   useEffect(() => {
     load(true).then((data) => {
       const highlightId = searchParams.get("sale");
@@ -54,6 +90,7 @@ export function SalesHistoryPage() {
         if (match) setSelected(match);
       }
     });
+    loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -71,6 +108,58 @@ export function SalesHistoryPage() {
       setPaymentError(e instanceof ApiError ? e.message : "Erreur lors de l'enregistrement du paiement");
     } finally {
       setPaymentSaving(false);
+    }
+  }
+
+  const addOptions = selected ? buildSellOptions(products, selected.location.id) : [];
+  const selectedAddOption = addOptions.find((o) => o.key === addOptionKey);
+  const addSubtotal = selectedAddOption ? selectedAddOption.unitPrice * (Number(addQuantity) || 0) : 0;
+
+  async function handleAddItem(e: FormEvent) {
+    e.preventDefault();
+    if (!selected || !selectedAddOption) return;
+    const quantity = Number(addQuantity) || 0;
+    if (quantity <= 0) return;
+    const amountPaid =
+      addPaymentMode === "full" ? addSubtotal : addPaymentMode === "unpaid" ? 0 : Number(addPartialAmount) || 0;
+    if (addPaymentMode === "partial" && (amountPaid <= 0 || amountPaid >= addSubtotal)) {
+      setAddError("Le montant payé partiel doit être compris entre 0 et le sous-total (exclus)");
+      return;
+    }
+    setAddSaving(true);
+    setAddError(null);
+    try {
+      const updated = await api.post<Sale>(`/sales/${selected.id}/items`, {
+        items: [{ productId: selectedAddOption.productId, sellUnitId: selectedAddOption.sellUnitId, quantity }],
+        amountPaid,
+      });
+      setSelected(updated);
+      setAddOptionKey("");
+      setAddQuantity("1");
+      setAddPaymentMode("full");
+      setAddPartialAmount("");
+      await Promise.all([load(), loadProducts()]);
+    } catch (e) {
+      setAddError(e instanceof ApiError ? e.message : "Erreur lors de l'ajout");
+    } finally {
+      setAddSaving(false);
+    }
+  }
+
+  async function handleCancel() {
+    if (!selected) return;
+    if (!confirm("Annuler cette vente ? Le stock vendu sera remis en stock.")) return;
+    const reason = window.prompt("Motif de l'annulation (optionnel)") || undefined;
+    setCancelSaving(true);
+    setCancelError(null);
+    try {
+      const updated = await api.post<Sale>(`/sales/${selected.id}/cancel`, { reason });
+      setSelected(updated);
+      await Promise.all([load(), loadProducts()]);
+    } catch (e) {
+      setCancelError(e instanceof ApiError ? e.message : "Erreur lors de l'annulation");
+    } finally {
+      setCancelSaving(false);
     }
   }
 
@@ -120,19 +209,24 @@ export function SalesHistoryPage() {
                   key={s.id}
                   onClick={() => {
                     setSelected(s);
-                    setPaymentAmount("");
-                    setPaymentError(null);
+                    resetSaleForms();
                   }}
-                  className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"
+                  className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 ${s.cancelledAt ? "opacity-50" : ""}`}
                 >
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{new Date(s.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{s.client.name}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{s.location.name}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{s.seller.name}</td>
                   <td className="px-4 py-2">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusClass[s.paymentStatus]}`}>
-                      {statusLabel[s.paymentStatus]}
-                    </span>
+                    {s.cancelledAt ? (
+                      <span className="rounded-full bg-slate-200 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
+                        Annulée
+                      </span>
+                    ) : (
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusClass[s.paymentStatus]}`}>
+                        {statusLabel[s.paymentStatus]}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-2 text-right font-medium text-slate-900 dark:text-slate-100">
                     {formatAmount(s.totalAmount)} Ar
@@ -151,6 +245,15 @@ export function SalesHistoryPage() {
               {new Date(selected.createdAt).toLocaleString()} · {selected.client.name} · {selected.location.name} · vendu par{" "}
               {selected.seller.name}
             </p>
+
+            {selected.cancelledAt && (
+              <p className="rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm text-slate-600 dark:text-slate-400">
+                Vente annulée le {new Date(selected.cancelledAt).toLocaleString()} par {selected.cancelledBy?.name}
+                {selected.cancelReason ? ` — ${selected.cancelReason}` : ""}
+                {Number(selected.amountPaid) > 0 ? ` (${formatAmount(selected.amountPaid)} Ar avaient été encaissés — à rembourser si nécessaire)` : ""}
+              </p>
+            )}
+
             <ul className="divide-y divide-slate-100 dark:divide-slate-800 text-sm">
               {selected.items.map((item) => (
                 <li key={item.id} className="flex items-center justify-between py-2">
@@ -198,7 +301,7 @@ export function SalesHistoryPage() {
               )}
             </div>
 
-            {selected.paymentStatus !== "PAID" && (
+            {selected.paymentStatus !== "PAID" && !selected.cancelledAt && (
               <form onSubmit={handleRecordPayment} className="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-3">
                 {paymentError && (
                   <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{paymentError}</p>
@@ -216,6 +319,90 @@ export function SalesHistoryPage() {
                   {paymentSaving ? "Enregistrement…" : "Enregistrer le paiement"}
                 </Button>
               </form>
+            )}
+
+            {!selected.cancelledAt && (
+              <form onSubmit={handleAddItem} className="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-3">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Ajouter des produits (client déjà en caisse)
+                </p>
+                {addError && (
+                  <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{addError}</p>
+                )}
+                <Select label="Produit" value={addOptionKey} onChange={(e) => setAddOptionKey(e.target.value)}>
+                  <option value="">Sélectionner…</option>
+                  {addOptions.map((o) => (
+                    <option key={o.key} value={o.key} disabled={o.maxQuantity <= 0}>
+                      {o.productName} — {formatAmount(o.unitPrice)} Ar ({o.unitLabel}, stock: {o.maxQuantity})
+                    </option>
+                  ))}
+                </Select>
+                <Input
+                  label="Quantité"
+                  type="number"
+                  min="1"
+                  max={selectedAddOption?.maxQuantity}
+                  value={addQuantity}
+                  onChange={(e) => setAddQuantity(e.target.value)}
+                />
+                {selectedAddOption && (
+                  <>
+                    <div className="flex flex-col gap-1.5 text-sm text-slate-700 dark:text-slate-300">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="addPaymentMode"
+                          checked={addPaymentMode === "full"}
+                          onChange={() => setAddPaymentMode("full")}
+                        />
+                        Payé intégralement ({formatAmount(addSubtotal)} Ar)
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="addPaymentMode"
+                          checked={addPaymentMode === "partial"}
+                          onChange={() => setAddPaymentMode("partial")}
+                        />
+                        Paiement partiel
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="addPaymentMode"
+                          checked={addPaymentMode === "unpaid"}
+                          onChange={() => setAddPaymentMode("unpaid")}
+                        />
+                        À crédit
+                      </label>
+                    </div>
+                    {addPaymentMode === "partial" && (
+                      <Input
+                        label="Montant payé maintenant"
+                        type="number"
+                        min="0"
+                        max={addSubtotal}
+                        value={addPartialAmount}
+                        onChange={(e) => setAddPartialAmount(e.target.value)}
+                      />
+                    )}
+                  </>
+                )}
+                <Button type="submit" className="w-full" disabled={addSaving || !selectedAddOption}>
+                  {addSaving ? "Ajout…" : "Ajouter à la vente"}
+                </Button>
+              </form>
+            )}
+
+            {canManage && !selected.cancelledAt && (
+              <div className="border-t border-slate-200 dark:border-slate-800 pt-3">
+                {cancelError && (
+                  <p className="mb-2 rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{cancelError}</p>
+                )}
+                <Button type="button" variant="secondary" className="w-full" onClick={handleCancel} disabled={cancelSaving}>
+                  {cancelSaving ? "Annulation…" : "Annuler cette vente"}
+                </Button>
+              </div>
             )}
           </div>
         )}

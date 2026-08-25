@@ -18,6 +18,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
       if (!existing) {
         throw new ApiError(404, "Vente introuvable");
       }
+      if (existing.cancelledAt) {
+        throw new ApiError(400, "Cette vente est annulée");
+      }
       const remaining = existing.totalAmount.sub(existing.amountPaid);
       if (amount.greaterThan(remaining)) {
         throw new ApiError(400, `Le montant dépasse le solde restant dû (${remaining.toString()})`);
@@ -43,9 +46,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
           location: true,
           items: { include: { product: true } },
           payments: { include: { createdBy: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } },
+          cancelledBy: { select: { id: true, name: true } },
         },
       });
-    });
+    }, { timeout: 15000 });
 
     return NextResponse.json(sale, { status: 201 });
   } catch (error) {

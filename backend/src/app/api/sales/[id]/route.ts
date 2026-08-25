@@ -13,6 +13,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
         location: true,
         items: { include: { product: true } },
         payments: { include: { createdBy: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } },
+        cancelledBy: { select: { id: true, name: true } },
       },
     });
     if (!sale) {
