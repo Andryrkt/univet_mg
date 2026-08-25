@@ -5,13 +5,20 @@ import type { PurchaseOrder } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 
+const statusLabel: Record<PurchaseOrder["status"], string> = {
+  PENDING: "En attente",
+  PARTIALLY_RECEIVED: "Partiellement reçue",
+  RECEIVED: "Reçue",
+  CANCELLED: "Annulée",
+};
+
 export function PurchaseOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [order, setOrder] = useState<PurchaseOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [received, setReceived] = useState<Record<string, string>>({});
+  const [receiveNow, setReceiveNow] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   async function load() {
@@ -20,8 +27,10 @@ export function PurchaseOrderDetailPage() {
     try {
       const data = await api.get<PurchaseOrder>(`/purchase-orders/${id}`);
       setOrder(data);
-      setReceived(
-        Object.fromEntries(data.items.map((item) => [item.id, String(item.quantityReceived ?? item.quantityOrdered)]))
+      setReceiveNow(
+        Object.fromEntries(
+          data.items.map((item) => [item.id, String(Math.max(item.quantityOrdered - item.quantityReceived, 0))])
+        )
       );
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur de chargement");
@@ -34,6 +43,8 @@ export function PurchaseOrderDetailPage() {
     load();
   }, [id]);
 
+  const canReceive = order?.status === "PENDING" || order?.status === "PARTIALLY_RECEIVED";
+
   async function handleReceive() {
     if (!order) return;
     setSaving(true);
@@ -42,7 +53,7 @@ export function PurchaseOrderDetailPage() {
       await api.post(`/purchase-orders/${order.id}/receive`, {
         items: order.items.map((item) => ({
           purchaseOrderItemId: item.id,
-          quantityReceived: Number(received[item.id] ?? 0),
+          quantityReceivedNow: Number(receiveNow[item.id] ?? 0),
         })),
       });
       await load();
@@ -67,6 +78,21 @@ export function PurchaseOrderDetailPage() {
     }
   }
 
+  async function handleClose() {
+    if (!order) return;
+    if (!confirm("Clôturer cette commande ? Le solde restant ne sera jamais reçu ; le stock déjà réceptionné est conservé.")) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await api.patch(`/purchase-orders/${order.id}`, { status: "RECEIVED" });
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erreur");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) return <p className="text-slate-400">Chargement…</p>;
   if (!order) return <p className="text-red-600">Commande introuvable</p>;
 
@@ -82,19 +108,27 @@ export function PurchaseOrderDetailPage() {
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Commande — {order.supplier.name}</h1>
           <p className="text-sm text-slate-500">
-            Créée le {new Date(order.orderDate).toLocaleDateString()} par {order.createdBy.name}
+            Créée le {new Date(order.orderDate).toLocaleDateString()} par {order.createdBy.name} ·{" "}
+            <span className="font-medium">{statusLabel[order.status]}</span>
           </p>
         </div>
-        {order.status === "PENDING" && (
-          <div className="flex gap-2">
+        <div className="flex gap-2">
+          {order.status === "PENDING" && (
             <Button variant="secondary" onClick={handleCancel} disabled={saving}>
               Annuler la commande
             </Button>
+          )}
+          {order.status === "PARTIALLY_RECEIVED" && (
+            <Button variant="secondary" onClick={handleClose} disabled={saving}>
+              Clôturer (solde non livré)
+            </Button>
+          )}
+          {canReceive && (
             <Button onClick={handleReceive} disabled={saving}>
               {saving ? "Traitement…" : "Réceptionner"}
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
@@ -104,36 +138,46 @@ export function PurchaseOrderDetailPage() {
           <thead className="bg-slate-50">
             <tr>
               <th className="px-4 py-2 text-left font-medium text-slate-600">Produit</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Qté commandée</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600">Commandé</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600">PU</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600">Qté reçue</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600">Déjà reçu</th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600">Reste</th>
+              {canReceive && <th className="px-4 py-2 text-right font-medium text-slate-600">À réceptionner</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {order.items.map((item) => (
-              <tr key={item.id}>
-                <td className="px-4 py-2 text-slate-700">{item.product.name}</td>
-                <td className="px-4 py-2 text-right text-slate-700">{item.quantityOrdered}</td>
-                <td className="px-4 py-2 text-right text-slate-700">{Number(item.unitPrice).toFixed(2)}</td>
-                <td className="px-4 py-2 text-right">
-                  {order.status === "PENDING" ? (
-                    <Input
-                      type="number"
-                      min="0"
-                      className="w-24 text-right"
-                      value={received[item.id] ?? ""}
-                      onChange={(e) => setReceived((prev) => ({ ...prev, [item.id]: e.target.value }))}
-                    />
-                  ) : (
-                    <span className="text-slate-700">{item.quantityReceived ?? "—"}</span>
+            {order.items.map((item) => {
+              const remaining = item.quantityOrdered - item.quantityReceived;
+              return (
+                <tr key={item.id}>
+                  <td className="px-4 py-2 text-slate-700">{item.product.name}</td>
+                  <td className="px-4 py-2 text-right text-slate-700">{item.quantityOrdered}</td>
+                  <td className="px-4 py-2 text-right text-slate-700">{Number(item.unitPrice).toFixed(2)}</td>
+                  <td className="px-4 py-2 text-right text-slate-700">{item.quantityReceived}</td>
+                  <td className="px-4 py-2 text-right text-slate-700">{remaining}</td>
+                  {canReceive && (
+                    <td className="px-4 py-2 text-right">
+                      {remaining > 0 ? (
+                        <Input
+                          type="number"
+                          min="0"
+                          max={remaining}
+                          className="w-24 text-right"
+                          value={receiveNow[item.id] ?? ""}
+                          onChange={(e) => setReceiveNow((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        />
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
                   )}
-                </td>
-              </tr>
-            ))}
+                </tr>
+              );
+            })}
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={3} className="px-4 py-2 text-right font-medium text-slate-600">
+              <td colSpan={canReceive ? 5 : 4} className="px-4 py-2 text-right font-medium text-slate-600">
                 Total commandé
               </td>
               <td className="px-4 py-2 text-right font-semibold text-slate-900">{total.toFixed(2)} Ar</td>

@@ -63,7 +63,7 @@ export type PurchaseOrderItem = {
   productId: string;
   product: Product;
   quantityOrdered: number;
-  quantityReceived: number | null;
+  quantityReceived: number;
   unitPrice: string;
 };
 
@@ -71,7 +71,7 @@ export type PurchaseOrder = {
   id: string;
   supplierId: string;
   supplier: Supplier;
-  status: "PENDING" | "RECEIVED" | "CANCELLED";
+  status: "PENDING" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CANCELLED";
   orderDate: string;
   receivedAt: string | null;
   createdBy: { id: string; name: string };

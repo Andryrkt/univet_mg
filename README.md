@@ -7,7 +7,7 @@ Application de gestion de stock et de ventes pour un cabinet vétérinaire.
 - **Frontend** : React + Vite + TypeScript + Tailwind CSS — [frontend/](frontend/)
 - **Orchestration** : Docker Compose
 
-Gère les produits, catégories (hiérarchiques, avec code à 3 lettres), unités, fournisseurs, commandes fournisseurs (avec réception de stock), ajustements manuels de stock, clients et leurs animaux, ventes (point de vente), et le journal des mouvements de stock. Trois rôles utilisateurs : **Admin**, **Modérateur**, **Vendeur** (voir la matrice de permissions dans le code, `backend/src/lib/api-helpers.ts` + chaque route).
+Gère les produits, catégories (hiérarchiques, avec code à 3 lettres), unités, fournisseurs, commandes fournisseurs (avec réceptions partielles multiples), ajustements manuels de stock, clients et leurs animaux, ventes (point de vente), et le journal des mouvements de stock. Trois rôles utilisateurs : **Admin**, **Modérateur**, **Vendeur** (voir la matrice de permissions dans le code, `backend/src/lib/api-helpers.ts` + chaque route).
 
 ## Démarrage
 

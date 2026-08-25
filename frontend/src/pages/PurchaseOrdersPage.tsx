@@ -11,12 +11,14 @@ type LineForm = { productId: string; quantityOrdered: string; unitPrice: string 
 
 const statusLabel: Record<PurchaseOrder["status"], string> = {
   PENDING: "En attente",
+  PARTIALLY_RECEIVED: "Partiellement reçue",
   RECEIVED: "Reçue",
   CANCELLED: "Annulée",
 };
 
 const statusColor: Record<PurchaseOrder["status"], string> = {
   PENDING: "bg-amber-100 text-amber-700",
+  PARTIALLY_RECEIVED: "bg-blue-100 text-blue-700",
   RECEIVED: "bg-green-100 text-green-700",
   CANCELLED: "bg-slate-100 text-slate-500",
 };
