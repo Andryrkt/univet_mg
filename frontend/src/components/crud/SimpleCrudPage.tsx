@@ -3,6 +3,7 @@ import { api, ApiError } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Modal } from "../ui/Modal";
+import { PlusIcon } from "../ui/icons";
 
 export type CrudField<T> = {
   name: keyof T & string;
@@ -101,7 +102,12 @@ export function SimpleCrudPage<T extends { id: string }>({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h1>
-        {canWrite && <Button onClick={openCreate}>+ Ajouter</Button>}
+        {canWrite && (
+          <Button onClick={openCreate}>
+            <PlusIcon className="mr-1.5 h-4 w-4" />
+            Ajouter
+          </Button>
+        )}
       </div>
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}

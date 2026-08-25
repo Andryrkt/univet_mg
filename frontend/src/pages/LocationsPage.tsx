@@ -4,6 +4,7 @@ import type { Location } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
+import { PlusIcon } from "../components/ui/icons";
 
 const emptyForm = { name: "", address: "", phone: "" };
 
@@ -83,7 +84,10 @@ export function LocationsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Emplacements</h1>
-        <Button onClick={openCreate}>+ Ajouter</Button>
+        <Button onClick={openCreate}>
+          <PlusIcon className="mr-1.5 h-4 w-4" />
+          Ajouter
+        </Button>
       </div>
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}

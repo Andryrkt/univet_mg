@@ -3,52 +3,69 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSettings } from "../../context/SettingsContext";
 import { ThemeToggle } from "../ui/ThemeToggle";
+import {
+  HomeIcon,
+  BoxIcon,
+  TagIcon,
+  ScaleIcon,
+  TruckIcon,
+  ClipboardListIcon,
+  MapPinIcon,
+  TransferIcon,
+  ChartBarIcon,
+  CartIcon,
+  ClockIcon,
+  UsersIcon,
+  UserCogIcon,
+  SettingsIcon,
+} from "../ui/icons";
 import type { Role } from "../../lib/types";
 
-type NavItem = { to: string; label: string; roles?: Role[]; end?: boolean };
+type IconComponent = (props: { className?: string }) => JSX.Element;
+type NavItem = { to: string; label: string; icon: IconComponent; roles?: Role[]; end?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
 
 const navGroups: NavGroup[] = [
   {
     label: "Général",
-    items: [{ to: "/", label: "Tableau de bord", end: true }],
+    items: [{ to: "/", label: "Tableau de bord", icon: HomeIcon, end: true }],
   },
   {
     label: "Catalogue",
     items: [
-      { to: "/produits", label: "Produits" },
-      { to: "/categories", label: "Catégories", roles: ["ADMIN", "MODERATOR"] },
-      { to: "/unites", label: "Unités", roles: ["ADMIN", "MODERATOR"] },
+      { to: "/produits", label: "Produits", icon: BoxIcon },
+      { to: "/categories", label: "Catégories", icon: TagIcon, roles: ["ADMIN", "MODERATOR"] },
+      { to: "/unites", label: "Unités", icon: ScaleIcon, roles: ["ADMIN", "MODERATOR"] },
     ],
   },
   {
     label: "Achats",
     items: [
-      { to: "/fournisseurs", label: "Fournisseurs", roles: ["ADMIN", "MODERATOR"] },
-      { to: "/commandes", label: "Commandes fournisseurs", roles: ["ADMIN", "MODERATOR"] },
+      { to: "/fournisseurs", label: "Fournisseurs", icon: TruckIcon, roles: ["ADMIN", "MODERATOR"] },
+      { to: "/commandes", label: "Commandes fournisseurs", icon: ClipboardListIcon, roles: ["ADMIN", "MODERATOR"] },
     ],
   },
   {
     label: "Stock",
     items: [
-      { to: "/emplacements", label: "Emplacements", roles: ["ADMIN", "MODERATOR"] },
-      { to: "/transferts-stock", label: "Transferts de stock", roles: ["ADMIN", "MODERATOR"] },
-      { to: "/mouvements-stock", label: "Mouvements de stock", roles: ["ADMIN", "MODERATOR"] },
+      { to: "/emplacements", label: "Emplacements", icon: MapPinIcon, roles: ["ADMIN", "MODERATOR"] },
+      { to: "/transferts-stock", label: "Transferts de stock", icon: TransferIcon, roles: ["ADMIN", "MODERATOR"] },
+      { to: "/mouvements-stock", label: "Mouvements de stock", icon: ChartBarIcon, roles: ["ADMIN", "MODERATOR"] },
     ],
   },
   {
     label: "Ventes",
     items: [
-      { to: "/ventes", label: "Point de vente" },
-      { to: "/historique-ventes", label: "Historique des ventes" },
-      { to: "/clients", label: "Clients" },
+      { to: "/ventes", label: "Point de vente", icon: CartIcon },
+      { to: "/historique-ventes", label: "Historique des ventes", icon: ClockIcon },
+      { to: "/clients", label: "Clients", icon: UsersIcon },
     ],
   },
   {
     label: "Administration",
     items: [
-      { to: "/utilisateurs", label: "Utilisateurs", roles: ["ADMIN"] },
-      { to: "/parametres", label: "Paramètres", roles: ["ADMIN"] },
+      { to: "/utilisateurs", label: "Utilisateurs", icon: UserCogIcon, roles: ["ADMIN"] },
+      { to: "/parametres", label: "Paramètres", icon: SettingsIcon, roles: ["ADMIN"] },
     ],
   },
 ];
@@ -88,13 +105,14 @@ export function AppLayout() {
                     to={item.to}
                     end={item.end}
                     className={({ isActive }) =>
-                      `rounded-lg px-3 py-2 text-sm font-medium ${
+                      `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium ${
                         isActive
                           ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                       }`
                     }
                   >
+                    <item.icon className="h-5 w-5 shrink-0" />
                     {item.label}
                   </NavLink>
                 ))}

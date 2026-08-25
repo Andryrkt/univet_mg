@@ -6,6 +6,7 @@ import { formatAmount } from "../lib/format";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
+import { PlusIcon } from "../components/ui/icons";
 
 const emptyForm = { name: "", species: "", breed: "", notes: "" };
 
@@ -71,7 +72,10 @@ export function ClientDetailPage() {
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-semibold text-slate-900 dark:text-slate-100">Animaux</h2>
-          <Button onClick={() => setModalOpen(true)}>+ Ajouter un animal</Button>
+          <Button onClick={() => setModalOpen(true)}>
+            <PlusIcon className="mr-1.5 h-4 w-4" />
+            Ajouter un animal
+          </Button>
         </div>
         {client.animals.length === 0 ? (
           <p className="text-sm text-slate-400 dark:text-slate-500">Aucun animal enregistré.</p>

@@ -6,6 +6,7 @@ import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
+import { PlusIcon } from "../components/ui/icons";
 
 type LineForm = { productId: string; quantityOrdered: string; unitPrice: string };
 
@@ -107,7 +108,10 @@ export function PurchaseOrdersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Commandes fournisseurs</h1>
-        <Button onClick={() => setModalOpen(true)}>+ Nouvelle commande</Button>
+        <Button onClick={() => setModalOpen(true)}>
+          <PlusIcon className="mr-1.5 h-4 w-4" />
+          Nouvelle commande
+        </Button>
       </div>
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
