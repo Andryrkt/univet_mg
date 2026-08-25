@@ -5,22 +5,51 @@ import { useSettings } from "../../context/SettingsContext";
 import type { Role } from "../../lib/types";
 
 type NavItem = { to: string; label: string; roles?: Role[]; end?: boolean };
+type NavGroup = { label: string; items: NavItem[] };
 
-const navItems: NavItem[] = [
-  { to: "/", label: "Tableau de bord", end: true },
-  { to: "/produits", label: "Produits" },
-  { to: "/categories", label: "Catégories", roles: ["ADMIN", "MODERATOR"] },
-  { to: "/unites", label: "Unités", roles: ["ADMIN", "MODERATOR"] },
-  { to: "/fournisseurs", label: "Fournisseurs", roles: ["ADMIN", "MODERATOR"] },
-  { to: "/commandes", label: "Commandes fournisseurs", roles: ["ADMIN", "MODERATOR"] },
-  { to: "/clients", label: "Clients" },
-  { to: "/ventes", label: "Point de vente" },
-  { to: "/historique-ventes", label: "Historique des ventes" },
-  { to: "/mouvements-stock", label: "Mouvements de stock", roles: ["ADMIN", "MODERATOR"] },
-  { to: "/emplacements", label: "Emplacements", roles: ["ADMIN", "MODERATOR"] },
-  { to: "/transferts-stock", label: "Transferts de stock", roles: ["ADMIN", "MODERATOR"] },
-  { to: "/utilisateurs", label: "Utilisateurs", roles: ["ADMIN"] },
-  { to: "/parametres", label: "Paramètres", roles: ["ADMIN"] },
+const navGroups: NavGroup[] = [
+  {
+    label: "Général",
+    items: [{ to: "/", label: "Tableau de bord", end: true }],
+  },
+  {
+    label: "Catalogue",
+    items: [
+      { to: "/produits", label: "Produits" },
+      { to: "/categories", label: "Catégories", roles: ["ADMIN", "MODERATOR"] },
+      { to: "/unites", label: "Unités", roles: ["ADMIN", "MODERATOR"] },
+    ],
+  },
+  {
+    label: "Achats",
+    items: [
+      { to: "/fournisseurs", label: "Fournisseurs", roles: ["ADMIN", "MODERATOR"] },
+      { to: "/commandes", label: "Commandes fournisseurs", roles: ["ADMIN", "MODERATOR"] },
+    ],
+  },
+  {
+    label: "Stock",
+    items: [
+      { to: "/emplacements", label: "Emplacements", roles: ["ADMIN", "MODERATOR"] },
+      { to: "/transferts-stock", label: "Transferts de stock", roles: ["ADMIN", "MODERATOR"] },
+      { to: "/mouvements-stock", label: "Mouvements de stock", roles: ["ADMIN", "MODERATOR"] },
+    ],
+  },
+  {
+    label: "Ventes",
+    items: [
+      { to: "/ventes", label: "Point de vente" },
+      { to: "/historique-ventes", label: "Historique des ventes" },
+      { to: "/clients", label: "Clients" },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      { to: "/utilisateurs", label: "Utilisateurs", roles: ["ADMIN"] },
+      { to: "/parametres", label: "Paramètres", roles: ["ADMIN"] },
+    ],
+  },
 ];
 
 export function AppLayout() {
@@ -33,29 +62,41 @@ export function AppLayout() {
 
   if (!user) return null;
 
-  const items = navItems.filter((item) => !item.roles || item.roles.includes(user.role));
+  const groups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.roles || item.roles.includes(user.role)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <aside className="w-64 shrink-0 border-r border-slate-200 bg-white">
+      <aside className="w-64 shrink-0 overflow-y-auto border-r border-slate-200 bg-white">
         <div className="border-b border-slate-200 px-4 py-4">
           <p className="text-lg font-bold text-slate-900">{settings.name}</p>
           {settings.tagline && <p className="text-xs text-slate-500">{settings.tagline}</p>}
         </div>
-        <nav className="flex flex-col gap-1 p-3">
-          {items.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                `rounded-lg px-3 py-2 text-sm font-medium ${
-                  isActive ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-                }`
-              }
-            >
-              {item.label}
-            </NavLink>
+        <nav className="flex flex-col gap-4 p-3">
+          {groups.map((group) => (
+            <div key={group.label}>
+              <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{group.label}</p>
+              <div className="flex flex-col gap-1">
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      `rounded-lg px-3 py-2 text-sm font-medium ${
+                        isActive ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
+                      }`
+                    }
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
       </aside>
