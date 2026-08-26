@@ -14,18 +14,21 @@ services:
       timeout: 5s
       retries: 10
 
-  # Job one-off : applique les migrations Prisma avant que le backend ne démarre.
-  # Utilise le stage "builder" (node_modules complet, avec le CLI Prisma) plutôt que
-  # le runner allégé utilisé par le service "backend".
+  # Job one-off : applique les migrations Prisma puis s'assure que le compte
+  # admin existe (sans les données de démonstration du seed complet) avant que
+  # le backend ne démarre. Utilise le stage "builder" (node_modules complet,
+  # avec le CLI Prisma) plutôt que le runner allégé utilisé par le service "backend".
   migrate:
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
       target: builder
-    command: npx prisma migrate deploy
+    command: sh -c "npx prisma migrate deploy && npm run create-admin"
     restart: "no"
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
