@@ -127,9 +127,12 @@ export type SaleItem = {
   subtotal: string;
 };
 
+export type PaymentMethod = "CASH" | "OTHER";
+
 export type Payment = {
   id: string;
   amount: string;
+  method: PaymentMethod;
   cashReceived: string | null;
   note: string | null;
   createdBy: { id: string; name: string };
@@ -137,6 +140,21 @@ export type Payment = {
 };
 
 export type PaymentStatus = "PAID" | "PARTIAL" | "UNPAID";
+
+export type CashSession = {
+  id: string;
+  locationId: string;
+  location: Location;
+  openingAmount: string;
+  openedBy: { id: string; name: string };
+  openedAt: string;
+  expectedAmount: string | null;
+  countedAmount: string | null;
+  difference: string | null;
+  note: string | null;
+  closedBy: { id: string; name: string } | null;
+  closedAt: string | null;
+};
 
 export type Sale = {
   id: string;

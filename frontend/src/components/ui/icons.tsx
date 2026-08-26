@@ -106,6 +106,16 @@ export function CartIcon({ className = "h-5 w-5" }: IconProps) {
   );
 }
 
+export function CoinsIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="9" cy="9" r="5.5" />
+      <path d="M14.5 6.5A5.5 5.5 0 1 1 6.5 14.5" />
+      <path d="M9 6.7v4.6M7 9h4" />
+    </svg>
+  );
+}
+
 export function ClockIcon({ className = "h-5 w-5" }: IconProps) {
   return (
     <svg {...base} className={className}>

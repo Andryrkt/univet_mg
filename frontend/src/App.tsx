@@ -22,6 +22,7 @@ import { UsersPage } from "./pages/UsersPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { LocationsPage } from "./pages/LocationsPage";
 import { StockTransfersPage } from "./pages/StockTransfersPage";
+import { CashSessionPage } from "./pages/CashSessionPage";
 
 function App() {
   return (
@@ -112,6 +113,7 @@ function App() {
         <Route path="/clients/:id" element={<ClientDetailPage />} />
         <Route path="/ventes" element={<SalesPage />} />
         <Route path="/historique-ventes" element={<SalesHistoryPage />} />
+        <Route path="/caisse" element={<CashSessionPage />} />
         <Route
           path="/mouvements-stock"
           element={

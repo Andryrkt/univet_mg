@@ -73,6 +73,7 @@ export function SalesPage() {
 
   const [paymentMode, setPaymentMode] = useState<"full" | "partial" | "unpaid">("full");
   const [partialAmount, setPartialAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "OTHER">("CASH");
   const [cashReceived, setCashReceived] = useState("");
 
   useEffect(() => {
@@ -122,7 +123,8 @@ export function SalesPage() {
   const amountPaid =
     paymentMode === "full" ? total : paymentMode === "unpaid" ? 0 : Number(partialAmount) || 0;
   const remaining = total - amountPaid;
-  const change = paymentMode === "full" && cashReceived ? Math.max(0, Number(cashReceived) - total) : 0;
+  const change =
+    paymentMode === "full" && paymentMethod === "CASH" && cashReceived ? Math.max(0, Number(cashReceived) - total) : 0;
 
   async function handleSubmit() {
     if (!clientId || !locationId || cart.length === 0) return;
@@ -130,7 +132,7 @@ export function SalesPage() {
       setError("Le montant payé partiel doit être compris entre 0 et le total (exclus)");
       return;
     }
-    if (paymentMode === "full" && cashReceived && Number(cashReceived) < total) {
+    if (paymentMode === "full" && paymentMethod === "CASH" && cashReceived && Number(cashReceived) < total) {
       setError("Le montant reçu ne peut pas être inférieur au total");
       return;
     }
@@ -141,7 +143,9 @@ export function SalesPage() {
         clientId,
         locationId,
         amountPaid,
-        cashReceived: paymentMode === "full" && cashReceived ? Number(cashReceived) : undefined,
+        method: paymentMode !== "unpaid" ? paymentMethod : undefined,
+        cashReceived:
+          paymentMode === "full" && paymentMethod === "CASH" && cashReceived ? Number(cashReceived) : undefined,
         items: cart.map((l) => {
           const option = options.find((o) => o.key === l.key)!;
           return { productId: option.productId, sellUnitId: option.sellUnitId, quantity: l.quantity };
@@ -150,6 +154,7 @@ export function SalesPage() {
       setCart([]);
       setPaymentMode("full");
       setPartialAmount("");
+      setPaymentMethod("CASH");
       setCashReceived("");
       navigate(`/historique-ventes?sale=${sale.id}`);
     } catch (e) {
@@ -333,14 +338,38 @@ export function SalesPage() {
             {paymentMode !== "full" && (
               <p className="text-sm text-amber-600 dark:text-amber-400">Reste à payer : {formatAmount(remaining)} Ar</p>
             )}
+            {paymentMode !== "unpaid" && (
+              <div className="flex gap-4 text-sm text-slate-700 dark:text-slate-300">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === "CASH"}
+                    onChange={() => setPaymentMethod("CASH")}
+                  />
+                  Espèces
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={paymentMethod === "OTHER"}
+                    onChange={() => setPaymentMethod("OTHER")}
+                  />
+                  Autre (Mvola, carte…)
+                </label>
+              </div>
+            )}
             {paymentMode === "full" && (
               <>
-                <AmountInput
-                  label="Montant reçu (espèces)"
-                  placeholder={String(total)}
-                  value={cashReceived}
-                  onChange={(e) => setCashReceived(e.target.value)}
-                />
+                {paymentMethod === "CASH" && (
+                  <AmountInput
+                    label="Montant reçu (espèces)"
+                    placeholder={String(total)}
+                    value={cashReceived}
+                    onChange={(e) => setCashReceived(e.target.value)}
+                  />
+                )}
                 {change > 0 && (
                   <p className="text-sm text-green-600 dark:text-green-400">Rendu à remettre : {formatAmount(change)} Ar</p>
                 )}

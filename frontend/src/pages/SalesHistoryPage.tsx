@@ -36,6 +36,7 @@ export function SalesHistoryPage() {
   const [search, setSearch] = useState("");
 
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"CASH" | "OTHER">("CASH");
   const [paymentCashReceived, setPaymentCashReceived] = useState("");
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -44,6 +45,7 @@ export function SalesHistoryPage() {
   const [addQuantity, setAddQuantity] = useState("1");
   const [addPaymentMode, setAddPaymentMode] = useState<"full" | "partial" | "unpaid">("full");
   const [addPartialAmount, setAddPartialAmount] = useState("");
+  const [addPaymentMethod, setAddPaymentMethod] = useState<"CASH" | "OTHER">("CASH");
   const [addCashReceived, setAddCashReceived] = useState("");
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
@@ -76,12 +78,14 @@ export function SalesHistoryPage() {
 
   function resetSaleForms() {
     setPaymentAmount("");
+    setPaymentMethod("CASH");
     setPaymentCashReceived("");
     setPaymentError(null);
     setAddOptionKey("");
     setAddQuantity("1");
     setAddPaymentMode("full");
     setAddPartialAmount("");
+    setAddPaymentMethod("CASH");
     setAddCashReceived("");
     setAddError(null);
     setCancelError(null);
@@ -101,12 +105,14 @@ export function SalesHistoryPage() {
 
   const paymentAmountValue = Number(paymentAmount) || 0;
   const paymentChange =
-    paymentCashReceived && paymentAmountValue > 0 ? Math.max(0, Number(paymentCashReceived) - paymentAmountValue) : 0;
+    paymentMethod === "CASH" && paymentCashReceived && paymentAmountValue > 0
+      ? Math.max(0, Number(paymentCashReceived) - paymentAmountValue)
+      : 0;
 
   async function handleRecordPayment(e: FormEvent) {
     e.preventDefault();
     if (!selected) return;
-    if (paymentCashReceived && Number(paymentCashReceived) < paymentAmountValue) {
+    if (paymentMethod === "CASH" && paymentCashReceived && Number(paymentCashReceived) < paymentAmountValue) {
       setPaymentError("Le montant reçu ne peut pas être inférieur au montant payé");
       return;
     }
@@ -115,10 +121,12 @@ export function SalesHistoryPage() {
     try {
       const updated = await api.post<Sale>(`/sales/${selected.id}/payments`, {
         amount: paymentAmountValue,
-        cashReceived: paymentCashReceived ? Number(paymentCashReceived) : undefined,
+        method: paymentMethod,
+        cashReceived: paymentMethod === "CASH" && paymentCashReceived ? Number(paymentCashReceived) : undefined,
       });
       setSelected(updated);
       setPaymentAmount("");
+      setPaymentMethod("CASH");
       setPaymentCashReceived("");
       await load();
     } catch (e) {
@@ -132,7 +140,9 @@ export function SalesHistoryPage() {
   const selectedAddOption = addOptions.find((o) => o.key === addOptionKey);
   const addSubtotal = selectedAddOption ? selectedAddOption.unitPrice * (Number(addQuantity) || 0) : 0;
   const addChange =
-    addPaymentMode === "full" && addCashReceived ? Math.max(0, Number(addCashReceived) - addSubtotal) : 0;
+    addPaymentMode === "full" && addPaymentMethod === "CASH" && addCashReceived
+      ? Math.max(0, Number(addCashReceived) - addSubtotal)
+      : 0;
 
   async function handleAddItem(e: FormEvent) {
     e.preventDefault();
@@ -145,7 +155,7 @@ export function SalesHistoryPage() {
       setAddError("Le montant payé partiel doit être compris entre 0 et le sous-total (exclus)");
       return;
     }
-    if (addPaymentMode === "full" && addCashReceived && Number(addCashReceived) < addSubtotal) {
+    if (addPaymentMode === "full" && addPaymentMethod === "CASH" && addCashReceived && Number(addCashReceived) < addSubtotal) {
       setAddError("Le montant reçu ne peut pas être inférieur au sous-total");
       return;
     }
@@ -155,13 +165,18 @@ export function SalesHistoryPage() {
       const updated = await api.post<Sale>(`/sales/${selected.id}/items`, {
         items: [{ productId: selectedAddOption.productId, sellUnitId: selectedAddOption.sellUnitId, quantity }],
         amountPaid,
-        cashReceived: addPaymentMode === "full" && addCashReceived ? Number(addCashReceived) : undefined,
+        method: addPaymentMode !== "unpaid" ? addPaymentMethod : undefined,
+        cashReceived:
+          addPaymentMode === "full" && addPaymentMethod === "CASH" && addCashReceived
+            ? Number(addCashReceived)
+            : undefined,
       });
       setSelected(updated);
       setAddOptionKey("");
       setAddQuantity("1");
       setAddPaymentMode("full");
       setAddPartialAmount("");
+      setAddPaymentMethod("CASH");
       setAddCashReceived("");
       await Promise.all([load(), loadProducts()]);
     } catch (e) {
@@ -339,7 +354,8 @@ export function SalesHistoryPage() {
                     return (
                       <li key={p.id} className="flex items-center justify-between">
                         <span>
-                          {new Date(p.createdAt).toLocaleString()} · {p.createdBy.name}
+                          {new Date(p.createdAt).toLocaleString()} · {p.createdBy.name} ·{" "}
+                          {p.method === "CASH" ? "Espèces" : "Autre"}
                           {p.cashReceived && (
                             <>
                               {" "}
@@ -369,12 +385,34 @@ export function SalesHistoryPage() {
                 />
                 {paymentAmountValue > 0 && (
                   <>
-                    <AmountInput
-                      label="Montant reçu (espèces)"
-                      placeholder={String(paymentAmountValue)}
-                      value={paymentCashReceived}
-                      onChange={(e) => setPaymentCashReceived(e.target.value)}
-                    />
+                    <div className="flex gap-4 text-sm text-slate-700 dark:text-slate-300">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="recordPaymentMethod"
+                          checked={paymentMethod === "CASH"}
+                          onChange={() => setPaymentMethod("CASH")}
+                        />
+                        Espèces
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="recordPaymentMethod"
+                          checked={paymentMethod === "OTHER"}
+                          onChange={() => setPaymentMethod("OTHER")}
+                        />
+                        Autre (Mvola, carte…)
+                      </label>
+                    </div>
+                    {paymentMethod === "CASH" && (
+                      <AmountInput
+                        label="Montant reçu (espèces)"
+                        placeholder={String(paymentAmountValue)}
+                        value={paymentCashReceived}
+                        onChange={(e) => setPaymentCashReceived(e.target.value)}
+                      />
+                    )}
                     {paymentChange > 0 && (
                       <p className="text-sm text-green-600 dark:text-green-400">
                         Rendu à remettre : {formatAmount(paymentChange)} Ar
@@ -450,14 +488,38 @@ export function SalesHistoryPage() {
                         onChange={(e) => setAddPartialAmount(e.target.value)}
                       />
                     )}
+                    {addPaymentMode !== "unpaid" && (
+                      <div className="flex gap-4 text-sm text-slate-700 dark:text-slate-300">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="addPaymentMethod"
+                            checked={addPaymentMethod === "CASH"}
+                            onChange={() => setAddPaymentMethod("CASH")}
+                          />
+                          Espèces
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="addPaymentMethod"
+                            checked={addPaymentMethod === "OTHER"}
+                            onChange={() => setAddPaymentMethod("OTHER")}
+                          />
+                          Autre (Mvola, carte…)
+                        </label>
+                      </div>
+                    )}
                     {addPaymentMode === "full" && (
                       <>
-                        <AmountInput
-                          label="Montant reçu (espèces)"
-                          placeholder={String(addSubtotal)}
-                          value={addCashReceived}
-                          onChange={(e) => setAddCashReceived(e.target.value)}
-                        />
+                        {addPaymentMethod === "CASH" && (
+                          <AmountInput
+                            label="Montant reçu (espèces)"
+                            placeholder={String(addSubtotal)}
+                            value={addCashReceived}
+                            onChange={(e) => setAddCashReceived(e.target.value)}
+                          />
+                        )}
                         {addChange > 0 && (
                           <p className="text-sm text-green-600 dark:text-green-400">
                             Rendu à remettre : {formatAmount(addChange)} Ar

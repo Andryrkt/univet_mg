@@ -15,6 +15,7 @@ import {
   ChartBarIcon,
   CartIcon,
   ClockIcon,
+  CoinsIcon,
   UsersIcon,
   UserCogIcon,
   SettingsIcon,
@@ -62,6 +63,7 @@ const navGroups: NavGroup[] = [
     items: [
       { to: "/ventes", label: "Point de vente", icon: CartIcon },
       { to: "/historique-ventes", label: "Historique des ventes", icon: ClockIcon },
+      { to: "/caisse", label: "Caisse", icon: CoinsIcon },
       { to: "/clients", label: "Clients", icon: UsersIcon },
     ],
   },

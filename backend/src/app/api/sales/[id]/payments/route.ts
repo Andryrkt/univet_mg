@@ -12,9 +12,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ error: "amount doit être un montant positif" }, { status: 400 });
     }
     const amount = new Prisma.Decimal(body.amount);
+    const method = body.method === "OTHER" ? "OTHER" : "CASH";
 
     let cashReceived: Prisma.Decimal | undefined;
-    if (body.cashReceived !== undefined && body.cashReceived !== null) {
+    if (method === "CASH" && body.cashReceived !== undefined && body.cashReceived !== null) {
       cashReceived = new Prisma.Decimal(body.cashReceived);
       if (cashReceived.lessThan(amount)) {
         return NextResponse.json({ error: "Le montant reçu ne peut pas être inférieur au montant payé" }, { status: 400 });
@@ -46,7 +47,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         data: {
           amountPaid: newAmountPaid,
           paymentStatus,
-          payments: { create: [{ amount, cashReceived, note: body.note || null, createdById: user.sub }] },
+          payments: { create: [{ amount, method, cashReceived, note: body.note || null, createdById: user.sub }] },
         },
         include: {
           client: true,

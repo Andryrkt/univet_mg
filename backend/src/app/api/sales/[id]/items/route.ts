@@ -94,8 +94,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
           ? "PARTIAL"
           : "UNPAID";
 
+      const method = body.method === "OTHER" ? "OTHER" : "CASH";
+
       let cashReceived: Prisma.Decimal | undefined;
-      if (body.cashReceived !== undefined && body.cashReceived !== null) {
+      if (method === "CASH" && body.cashReceived !== undefined && body.cashReceived !== null) {
         cashReceived = new Prisma.Decimal(body.cashReceived);
         if (cashReceived.lessThan(additionalPaid)) {
           throw new ApiError(400, "Le montant reçu ne peut pas être inférieur au montant payé");
@@ -114,6 +116,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
                 create: [
                   {
                     amount: additionalPaid,
+                    method,
                     cashReceived,
                     note: "Ajout de produits après validation",
                     createdById: user.sub,
