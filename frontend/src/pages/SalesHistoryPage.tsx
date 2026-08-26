@@ -1,16 +1,19 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
-import type { Product, Sale } from "../lib/types";
+import type { Paginated, Product, Sale } from "../lib/types";
 import { Modal } from "../components/ui/Modal";
 import { Input } from "../components/ui/Input";
 import { AmountInput } from "../components/ui/AmountInput";
 import { Select } from "../components/ui/Select";
 import { Button } from "../components/ui/Button";
+import { Pagination } from "../components/ui/Pagination";
 import { formatAmount } from "../lib/format";
 import { SearchInput } from "../components/ui/SearchInput";
 import { useAuth } from "../context/AuthContext";
 import { buildSellOptions } from "./SalesPage";
+
+const PAGE_SIZE = 20;
 
 const statusLabel: Record<Sale["paymentStatus"], string> = {
   PAID: "Payé",
@@ -34,6 +37,10 @@ export function SalesHistoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Sale | null>(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"CASH" | "OTHER">("CASH");
@@ -56,9 +63,13 @@ export function SalesHistoryPage() {
   async function load(showSpinner = false) {
     if (showSpinner) setLoading(true);
     try {
-      const data = await api.get<Sale[]>("/sales");
-      setSales(data);
-      return data;
+      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      const data = await api.get<Paginated<Sale>>(`/sales?${params.toString()}`);
+      setSales(data.items);
+      setTotal(data.total);
+      setTotalPages(data.totalPages);
+      return data.items;
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur de chargement");
       return [];
@@ -91,16 +102,32 @@ export function SalesHistoryPage() {
     setCancelError(null);
   }
 
+  const highlightAppliedRef = useRef(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
   useEffect(() => {
     load(true).then((data) => {
+      if (highlightAppliedRef.current) return;
+      highlightAppliedRef.current = true;
       const highlightId = searchParams.get("sale");
       if (highlightId) {
         const match = data.find((s) => s.id === highlightId);
         if (match) setSelected(match);
       }
     });
-    loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, debouncedSearch]);
+
+  useEffect(() => {
+    loadProducts();
   }, []);
 
   const paymentAmountValue = Number(paymentAmount) || 0;
@@ -205,17 +232,6 @@ export function SalesHistoryPage() {
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
-  const filteredSales = search
-    ? sales.filter((s) => {
-        const q = search.toLowerCase();
-        return (
-          s.client.name.toLowerCase().includes(q) ||
-          s.location.name.toLowerCase().includes(q) ||
-          s.seller.name.toLowerCase().includes(q)
-        );
-      })
-    : sales;
-
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Historique des ventes</h1>
@@ -237,14 +253,14 @@ export function SalesHistoryPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredSales.length === 0 ? (
+            {sales.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                   {search ? "Aucun résultat" : "Aucune vente"}
                 </td>
               </tr>
             ) : (
-              filteredSales.map((s) => (
+              sales.map((s) => (
                 <tr
                   key={s.id}
                   onClick={() => {
@@ -277,6 +293,8 @@ export function SalesHistoryPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
 
       <Modal open={!!selected} onClose={() => setSelected(null)} title="Détail de la vente">
         {selected && (

@@ -3,21 +3,43 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
 import { consumeBatchesFefo } from "@/lib/stock-batches";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 
 export async function GET(request: Request) {
   try {
     await requireRole(request, ["ADMIN", "MODERATOR", "SELLER"]);
-    const sales = await prisma.sale.findMany({
-      include: {
-        client: true,
-        seller: { select: { id: true, name: true } },
-        location: true,
-        items: { include: { product: true } },
-        payments: { include: { createdBy: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" } },
-        cancelledBy: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search")?.trim();
+    const pagination = parsePagination(searchParams);
+
+    const where: Prisma.SaleWhereInput = search
+      ? {
+          OR: [
+            { client: { name: { contains: search, mode: "insensitive" } } },
+            { location: { name: { contains: search, mode: "insensitive" } } },
+            { seller: { name: { contains: search, mode: "insensitive" } } },
+          ],
+        }
+      : {};
+
+    const include = {
+      client: true,
+      seller: { select: { id: true, name: true } },
+      location: true,
+      items: { include: { product: true } },
+      payments: { include: { createdBy: { select: { id: true, name: true } } }, orderBy: { createdAt: "asc" as const } },
+      cancelledBy: { select: { id: true, name: true } },
+    };
+
+    if (pagination) {
+      const [items, total] = await Promise.all([
+        prisma.sale.findMany({ where, include, orderBy: { createdAt: "desc" }, skip: pagination.skip, take: pagination.take }),
+        prisma.sale.count({ where }),
+      ]);
+      return NextResponse.json(paginatedResponse(items, total, pagination));
+    }
+
+    const sales = await prisma.sale.findMany({ where, include, orderBy: { createdAt: "desc" } });
     return NextResponse.json(sales);
   } catch (error) {
     return handleApiError(error);

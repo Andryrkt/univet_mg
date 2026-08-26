@@ -1,5 +1,7 @@
 export type Role = "ADMIN" | "MODERATOR" | "SELLER";
 
+export type Paginated<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number };
+
 export type User = {
   id: string;
   email: string;
@@ -199,7 +201,7 @@ export type StockMovement = {
   product: Product;
   locationId: string;
   location: Location;
-  type: "PURCHASE_RECEPTION" | "SALE" | "ADJUSTMENT" | "TRANSFER_OUT" | "TRANSFER_IN";
+  type: "PURCHASE_RECEPTION" | "SALE" | "ADJUSTMENT" | "TRANSFER_OUT" | "TRANSFER_IN" | "SALE_CANCELLATION";
   quantity: number;
   note: string | null;
   createdBy: { id: string; name: string };

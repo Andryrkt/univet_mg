@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../lib/api";
-import type { PurchaseOrder, Supplier, Product, Location } from "../lib/types";
+import type { Paginated, PurchaseOrder, Supplier, Product, Location } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { AmountInput } from "../components/ui/AmountInput";
@@ -9,6 +9,9 @@ import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
 import { SearchInput } from "../components/ui/SearchInput";
+import { Pagination } from "../components/ui/Pagination";
+
+const PAGE_SIZE = 20;
 
 type LineForm = { productId: string; quantityOrdered: string; unitPrice: string };
 
@@ -39,16 +42,27 @@ export function PurchaseOrdersPage() {
   const [lines, setLines] = useState<LineForm[]>([{ productId: "", quantityOrdered: "", unitPrice: "" }]);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  async function loadOrders() {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    const data = await api.get<Paginated<PurchaseOrder>>(`/purchase-orders?${params.toString()}`);
+    setOrders(data.items);
+    setTotal(data.total);
+    setTotalPages(data.totalPages);
+  }
 
   async function load() {
     try {
-      const [o, s, p, l] = await Promise.all([
-        api.get<PurchaseOrder[]>("/purchase-orders"),
+      const [s, p, l] = await Promise.all([
         api.get<Supplier[]>("/suppliers"),
         api.get<Product[]>("/products"),
         api.get<Location[]>("/locations"),
       ]);
-      setOrders(o);
       setSuppliers(s);
       setProducts(p);
       setLocations(l.filter((loc) => loc.isActive));
@@ -61,7 +75,22 @@ export function PurchaseOrdersPage() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    loadOrders().catch((e) => setError(e instanceof ApiError ? e.message : "Erreur de chargement"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, debouncedSearch]);
 
   function updateLine(index: number, patch: Partial<LineForm>) {
     setLines((prev) => prev.map((l, i) => (i === index ? { ...l, ...patch } : l)));
@@ -97,7 +126,8 @@ export function PurchaseOrdersPage() {
       });
       setModalOpen(false);
       resetForm();
-      await load();
+      setPage(1);
+      await loadOrders();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur d'enregistrement");
     } finally {
@@ -106,17 +136,6 @@ export function PurchaseOrdersPage() {
   }
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
-
-  const filteredOrders = search
-    ? orders.filter((o) => {
-        const q = search.toLowerCase();
-        return (
-          o.supplier.name.toLowerCase().includes(q) ||
-          o.location.name.toLowerCase().includes(q) ||
-          statusLabel[o.status].toLowerCase().includes(q)
-        );
-      })
-    : orders;
 
   return (
     <div className="space-y-4">
@@ -144,14 +163,14 @@ export function PurchaseOrdersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredOrders.length === 0 ? (
+            {orders.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                   {search ? "Aucun résultat" : "Aucune commande"}
                 </td>
               </tr>
             ) : (
-              filteredOrders.map((o) => (
+              orders.map((o) => (
                 <tr key={o.id}>
                   <td className="px-4 py-2">
                     <Link to={`/commandes/${o.id}`} className="font-medium text-slate-900 dark:text-slate-100 hover:underline">
@@ -172,6 +191,8 @@ export function PurchaseOrdersPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Nouvelle commande fournisseur">
         <form onSubmit={handleSubmit} className="space-y-3">

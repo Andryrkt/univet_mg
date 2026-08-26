@@ -1,18 +1,26 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api";
-import type { CashSession, Location } from "../lib/types";
+import type { CashSession, Location, Paginated } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { AmountInput } from "../components/ui/AmountInput";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { Pagination } from "../components/ui/Pagination";
 import { formatAmount } from "../lib/format";
+
+const PAGE_SIZE = 15;
 
 export function CashSessionPage() {
   const [locations, setLocations] = useState<Location[]>([]);
-  const [sessions, setSessions] = useState<CashSession[]>([]);
   const [locationId, setLocationId] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [openSession, setOpenSession] = useState<CashSession | null>(null);
+  const [history, setHistory] = useState<CashSession[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const [openingAmount, setOpeningAmount] = useState("");
   const [opening, setOpening] = useState(false);
@@ -21,30 +29,58 @@ export function CashSessionPage() {
   const [closeNote, setCloseNote] = useState("");
   const [closing, setClosing] = useState(false);
 
-  async function load(showSpinner = false) {
-    if (showSpinner) setLoading(true);
-    try {
-      const [l, s] = await Promise.all([api.get<Location[]>("/locations"), api.get<CashSession[]>("/cash-sessions")]);
-      const activeLocations = l.filter((loc) => loc.isActive);
-      setLocations(activeLocations);
-      setSessions(s);
-      setLocationId((prev) => prev || activeLocations[0]?.id || "");
-    } catch (e) {
-      setError(e instanceof ApiError ? e.message : "Erreur de chargement");
-    } finally {
-      if (showSpinner) setLoading(false);
+  async function loadOpenSession(forLocationId: string) {
+    if (!forLocationId) {
+      setOpenSession(null);
+      return;
     }
+    const sessions = await api.get<CashSession[]>(`/cash-sessions?locationId=${forLocationId}&status=open`);
+    setOpenSession(sessions[0] ?? null);
+  }
+
+  async function loadHistory(forLocationId: string, forPage: number) {
+    if (!forLocationId) {
+      setHistory([]);
+      setTotal(0);
+      setTotalPages(1);
+      return;
+    }
+    const data = await api.get<Paginated<CashSession>>(
+      `/cash-sessions?locationId=${forLocationId}&status=closed&page=${forPage}&pageSize=${PAGE_SIZE}`
+    );
+    setHistory(data.items);
+    setTotal(data.total);
+    setTotalPages(data.totalPages);
   }
 
   useEffect(() => {
-    load(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    api
+      .get<Location[]>("/locations")
+      .then((l) => {
+        const activeLocations = l.filter((loc) => loc.isActive);
+        setLocations(activeLocations);
+        setLocationId(activeLocations[0]?.id ?? "");
+      })
+      .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur de chargement"))
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
+  useEffect(() => {
+    setPage(1);
+    if (!locationId) return;
+    Promise.all([loadOpenSession(locationId), loadHistory(locationId, 1)]).catch((e) =>
+      setError(e instanceof ApiError ? e.message : "Erreur de chargement")
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationId]);
 
-  const openSession = sessions.find((s) => s.locationId === locationId && !s.closedAt);
-  const history = sessions.filter((s) => s.locationId === locationId && s.closedAt);
+  useEffect(() => {
+    if (!locationId) return;
+    loadHistory(locationId, page).catch((e) => setError(e instanceof ApiError ? e.message : "Erreur de chargement"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
 
   async function handleOpen(e: FormEvent) {
     e.preventDefault();
@@ -53,7 +89,7 @@ export function CashSessionPage() {
     try {
       await api.post("/cash-sessions", { locationId, openingAmount: Number(openingAmount) || 0 });
       setOpeningAmount("");
-      await load();
+      await loadOpenSession(locationId);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur lors de l'ouverture de la caisse");
     } finally {
@@ -73,7 +109,8 @@ export function CashSessionPage() {
       });
       setCountedAmount("");
       setCloseNote("");
-      await load();
+      setPage(1);
+      await Promise.all([loadOpenSession(locationId), loadHistory(locationId, 1)]);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur lors de la clôture de la caisse");
     } finally {
@@ -139,48 +176,52 @@ export function CashSessionPage() {
       )}
 
       {locationId && history.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-950">
-              <tr>
-                <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Ouverte le</th>
-                <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Fermée le</th>
-                <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Ouverture</th>
-                <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Attendu</th>
-                <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Compté</th>
-                <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Écart</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {history.map((s) => {
-                const diff = Number(s.difference ?? 0);
-                return (
-                  <tr key={s.id}>
-                    <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{new Date(s.openedAt).toLocaleString()}</td>
-                    <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
-                      {s.closedAt && new Date(s.closedAt).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{formatAmount(s.openingAmount)}</td>
-                    <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">
-                      {s.expectedAmount !== null ? formatAmount(s.expectedAmount) : "—"}
-                    </td>
-                    <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">
-                      {s.countedAmount !== null ? formatAmount(s.countedAmount) : "—"}
-                    </td>
-                    <td
-                      className={`px-4 py-2 text-right font-medium ${
-                        diff === 0 ? "text-slate-500 dark:text-slate-400" : diff > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                      }`}
-                    >
-                      {diff > 0 ? "+" : ""}
-                      {formatAmount(diff)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800 text-sm">
+              <thead className="bg-slate-50 dark:bg-slate-950">
+                <tr>
+                  <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Ouverte le</th>
+                  <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Fermée le</th>
+                  <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Ouverture</th>
+                  <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Attendu</th>
+                  <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Compté</th>
+                  <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Écart</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {history.map((s) => {
+                  const diff = Number(s.difference ?? 0);
+                  return (
+                    <tr key={s.id}>
+                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{new Date(s.openedAt).toLocaleString()}</td>
+                      <td className="px-4 py-2 text-slate-700 dark:text-slate-300">
+                        {s.closedAt && new Date(s.closedAt).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{formatAmount(s.openingAmount)}</td>
+                      <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">
+                        {s.expectedAmount !== null ? formatAmount(s.expectedAmount) : "—"}
+                      </td>
+                      <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">
+                        {s.countedAmount !== null ? formatAmount(s.countedAmount) : "—"}
+                      </td>
+                      <td
+                        className={`px-4 py-2 text-right font-medium ${
+                          diff === 0 ? "text-slate-500 dark:text-slate-400" : diff > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                        }`}
+                      >
+                        {diff > 0 ? "+" : ""}
+                        {formatAmount(diff)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
+        </>
       )}
     </div>
   );

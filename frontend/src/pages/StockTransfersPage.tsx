@@ -1,12 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../lib/api";
-import type { Location, Product, StockTransfer } from "../lib/types";
+import type { Location, Paginated, Product, StockTransfer } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { SearchInput } from "../components/ui/SearchInput";
+import { Pagination } from "../components/ui/Pagination";
 
 const emptyForm = { productId: "", fromLocationId: "", toLocationId: "", quantity: "", note: "" };
+const PAGE_SIZE = 25;
 
 export function StockTransfersPage() {
   const [transfers, setTransfers] = useState<StockTransfer[]>([]);
@@ -17,15 +19,23 @@ export function StockTransfersPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  async function loadTransfers() {
+    const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    const data = await api.get<Paginated<StockTransfer>>(`/stock-transfers?${params.toString()}`);
+    setTransfers(data.items);
+    setTotal(data.total);
+    setTotalPages(data.totalPages);
+  }
 
   async function load() {
     try {
-      const [t, p, l] = await Promise.all([
-        api.get<StockTransfer[]>("/stock-transfers"),
-        api.get<Product[]>("/products"),
-        api.get<Location[]>("/locations"),
-      ]);
-      setTransfers(t);
+      const [p, l] = await Promise.all([api.get<Product[]>("/products"), api.get<Location[]>("/locations")]);
       setProducts(p.filter((pr) => pr.isActive));
       setLocations(l.filter((loc) => loc.isActive));
     } catch (e) {
@@ -37,7 +47,22 @@ export function StockTransfersPage() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    loadTransfers().catch((e) => setError(e instanceof ApiError ? e.message : "Erreur de chargement"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, debouncedSearch]);
 
   const selectedProduct = products.find((p) => p.id === form.productId);
   const availableAtSource = selectedProduct?.stocks.find((s) => s.locationId === form.fromLocationId)?.quantity ?? 0;
@@ -55,7 +80,7 @@ export function StockTransfersPage() {
         note: form.note || null,
       });
       setForm(emptyForm);
-      await load();
+      await Promise.all([load(), loadTransfers()]);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur lors du transfert");
     } finally {
@@ -64,17 +89,6 @@ export function StockTransfersPage() {
   }
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
-
-  const filteredTransfers = search
-    ? transfers.filter((t) => {
-        const q = search.toLowerCase();
-        return (
-          t.product.name.toLowerCase().includes(q) ||
-          t.fromLocation.name.toLowerCase().includes(q) ||
-          t.toLocation.name.toLowerCase().includes(q)
-        );
-      })
-    : transfers;
 
   return (
     <div className="space-y-6">
@@ -160,14 +174,14 @@ export function StockTransfersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredTransfers.length === 0 ? (
+            {transfers.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                   {search ? "Aucun résultat" : "Aucun transfert"}
                 </td>
               </tr>
             ) : (
-              filteredTransfers.map((t) => (
+              transfers.map((t) => (
                 <tr key={t.id}>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{new Date(t.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{t.product.name}</td>
@@ -181,6 +195,8 @@ export function StockTransfersPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
     </div>
   );
 }

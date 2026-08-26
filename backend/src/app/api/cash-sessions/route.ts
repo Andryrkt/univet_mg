@@ -1,19 +1,37 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 
 export async function GET(request: Request) {
   try {
     await requireRole(request, ["ADMIN", "MODERATOR", "SELLER"]);
-    const sessions = await prisma.cashSession.findMany({
-      include: {
-        location: true,
-        openedBy: { select: { id: true, name: true } },
-        closedBy: { select: { id: true, name: true } },
-      },
-      orderBy: { openedAt: "desc" },
-      take: 200,
-    });
+    const { searchParams } = new URL(request.url);
+    const locationId = searchParams.get("locationId") ?? undefined;
+    const status = searchParams.get("status");
+    const pagination = parsePagination(searchParams);
+
+    const where: Prisma.CashSessionWhereInput = {
+      locationId,
+      ...(status === "open" ? { closedAt: null } : status === "closed" ? { closedAt: { not: null } } : {}),
+    };
+
+    const include = {
+      location: true,
+      openedBy: { select: { id: true, name: true } },
+      closedBy: { select: { id: true, name: true } },
+    };
+
+    if (pagination) {
+      const [items, total] = await Promise.all([
+        prisma.cashSession.findMany({ where, include, orderBy: { openedAt: "desc" }, skip: pagination.skip, take: pagination.take }),
+        prisma.cashSession.count({ where }),
+      ]);
+      return NextResponse.json(paginatedResponse(items, total, pagination));
+    }
+
+    const sessions = await prisma.cashSession.findMany({ where, include, orderBy: { openedAt: "desc" }, take: 200 });
     return NextResponse.json(sessions);
   } catch (error) {
     return handleApiError(error);

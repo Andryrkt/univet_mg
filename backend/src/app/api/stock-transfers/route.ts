@@ -1,21 +1,43 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
 import { addToBatch, consumeBatchesFefo } from "@/lib/stock-batches";
+import { parsePagination, paginatedResponse } from "@/lib/pagination";
 
 export async function GET(request: Request) {
   try {
     await requireRole(request, ["ADMIN", "MODERATOR"]);
-    const transfers = await prisma.stockTransfer.findMany({
-      include: {
-        product: true,
-        fromLocation: true,
-        toLocation: true,
-        createdBy: { select: { id: true, name: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 200,
-    });
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search")?.trim();
+    const pagination = parsePagination(searchParams);
+
+    const where: Prisma.StockTransferWhereInput = search
+      ? {
+          OR: [
+            { product: { name: { contains: search, mode: "insensitive" } } },
+            { fromLocation: { name: { contains: search, mode: "insensitive" } } },
+            { toLocation: { name: { contains: search, mode: "insensitive" } } },
+          ],
+        }
+      : {};
+
+    const include = {
+      product: true,
+      fromLocation: true,
+      toLocation: true,
+      createdBy: { select: { id: true, name: true } },
+    };
+
+    if (pagination) {
+      const [items, total] = await Promise.all([
+        prisma.stockTransfer.findMany({ where, include, orderBy: { createdAt: "desc" }, skip: pagination.skip, take: pagination.take }),
+        prisma.stockTransfer.count({ where }),
+      ]);
+      return NextResponse.json(paginatedResponse(items, total, pagination));
+    }
+
+    const transfers = await prisma.stockTransfer.findMany({ where, include, orderBy: { createdAt: "desc" }, take: 200 });
     return NextResponse.json(transfers);
   } catch (error) {
     return handleApiError(error);

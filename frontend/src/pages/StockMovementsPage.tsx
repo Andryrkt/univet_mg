@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../lib/api";
-import type { StockMovement } from "../lib/types";
+import type { Paginated, StockMovement } from "../lib/types";
 import { SearchInput } from "../components/ui/SearchInput";
+import { Pagination } from "../components/ui/Pagination";
+
+const PAGE_SIZE = 25;
 
 const typeLabel: Record<StockMovement["type"], string> = {
   PURCHASE_RECEPTION: "Réception fournisseur",
@@ -9,6 +12,7 @@ const typeLabel: Record<StockMovement["type"], string> = {
   ADJUSTMENT: "Ajustement",
   TRANSFER_OUT: "Transfert (sortie)",
   TRANSFER_IN: "Transfert (entrée)",
+  SALE_CANCELLATION: "Annulation de vente",
 };
 
 export function StockMovementsPage() {
@@ -16,28 +20,36 @@ export function StockMovementsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    setLoading(true);
+    const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+    if (debouncedSearch) params.set("search", debouncedSearch);
     api
-      .get<StockMovement[]>("/stock-movements")
-      .then(setMovements)
+      .get<Paginated<StockMovement>>(`/stock-movements?${params.toString()}`)
+      .then((data) => {
+        setMovements(data.items);
+        setTotal(data.total);
+        setTotalPages(data.totalPages);
+      })
       .catch((e) => setError(e instanceof ApiError ? e.message : "Erreur de chargement"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [page, debouncedSearch]);
 
   if (loading) return <p className="text-slate-400 dark:text-slate-500">Chargement…</p>;
-
-  const filteredMovements = search
-    ? movements.filter((m) => {
-        const q = search.toLowerCase();
-        return (
-          m.product.name.toLowerCase().includes(q) ||
-          m.location.name.toLowerCase().includes(q) ||
-          typeLabel[m.type].toLowerCase().includes(q) ||
-          m.createdBy.name.toLowerCase().includes(q)
-        );
-      })
-    : movements;
 
   return (
     <div className="space-y-4">
@@ -60,14 +72,14 @@ export function StockMovementsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {filteredMovements.length === 0 ? (
+            {movements.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                   {search ? "Aucun résultat" : "Aucun mouvement"}
                 </td>
               </tr>
             ) : (
-              filteredMovements.map((m) => (
+              movements.map((m) => (
                 <tr key={m.id}>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{new Date(m.createdAt).toLocaleString()}</td>
                   <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{m.product.name}</td>
@@ -83,6 +95,8 @@ export function StockMovementsPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} totalPages={totalPages} total={total} onChange={setPage} />
     </div>
   );
 }
