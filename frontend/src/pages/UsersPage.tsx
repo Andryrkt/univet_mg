@@ -3,6 +3,7 @@ import { api, ApiError } from "../lib/api";
 import type { User } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { PasswordInput } from "../components/ui/PasswordInput";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
@@ -128,9 +129,8 @@ export function UsersPage() {
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
-          <Input
+          <PasswordInput
             label="Mot de passe"
-            type="password"
             required
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}

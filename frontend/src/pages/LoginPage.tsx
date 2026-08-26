@@ -5,6 +5,7 @@ import { useSettings } from "../context/SettingsContext";
 import { ApiError } from "../lib/api";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { PasswordInput } from "../components/ui/PasswordInput";
 import { ThemeToggle } from "../components/ui/ThemeToggle";
 
 export function LoginPage() {
@@ -44,9 +45,8 @@ export function LoginPage() {
         {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
         <Input label="Email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Input
+        <PasswordInput
           label="Mot de passe"
-          type="password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
