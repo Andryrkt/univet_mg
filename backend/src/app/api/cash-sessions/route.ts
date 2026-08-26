@@ -25,13 +25,19 @@ export async function GET(request: Request) {
     };
 
     // Pour une session encore ouverte, on calcule en direct ce qui a déjà été
-    // encaissé (espèces / autre) depuis l'ouverture, pour affichage seulement.
+    // encaissé / dépensé (espèces / autre) depuis l'ouverture, pour affichage seulement.
     async function withLiveTotals<T extends { closedAt: Date | null; locationId: string; openedAt: Date }>(sessions: T[]) {
       return Promise.all(
         sessions.map(async (s) => {
           if (s.closedAt) return s;
           const totals = await computeCashSessionTotals(prisma, { locationId: s.locationId, openedAt: s.openedAt });
-          return { ...s, liveCashCollected: totals.cash, liveOtherCollected: totals.other };
+          return {
+            ...s,
+            liveCashCollected: totals.cashPayments,
+            liveOtherCollected: totals.otherPayments,
+            liveCashExpenses: totals.cashExpenses,
+            liveOtherExpenses: totals.otherExpenses,
+          };
         })
       );
     }

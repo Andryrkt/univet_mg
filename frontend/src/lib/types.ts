@@ -13,6 +13,22 @@ export type User = {
 
 export type Unit = { id: string; name: string; symbol: string | null };
 
+export type ExpenseCategory = { id: string; name: string };
+
+export type Expense = {
+  id: string;
+  date: string;
+  amount: string;
+  categoryId: string;
+  category: ExpenseCategory;
+  locationId: string;
+  location: Location;
+  method: "CASH" | "OTHER";
+  note: string | null;
+  createdBy: { id: string; name: string };
+  createdAt: string;
+};
+
 export type Category = { id: string; name: string; code: string; description: string | null; parentId: string | null };
 
 export type Supplier = {
@@ -152,6 +168,8 @@ export type CashSession = {
   openedAt: string;
   expectedAmount: string | null;
   otherAmount: string | null;
+  cashExpenses: string | null;
+  otherExpenses: string | null;
   countedAmount: string | null;
   difference: string | null;
   note: string | null;
@@ -159,6 +177,8 @@ export type CashSession = {
   closedAt: string | null;
   liveCashCollected?: string | null;
   liveOtherCollected?: string | null;
+  liveCashExpenses?: string | null;
+  liveOtherExpenses?: string | null;
 };
 
 export type Sale = {

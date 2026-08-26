@@ -58,6 +58,7 @@ model User {
   cancelledSales        Sale[]          @relation("SaleCancelledBy")
   openedCashSessions    CashSession[]   @relation("CashSessionOpenedBy")
   closedCashSessions    CashSession[]   @relation("CashSessionClosedBy")
+  expenses              Expense[]
 }
 
 // Emplacement / point de vente physique. Le catalogue (produits, catégories,
@@ -79,6 +80,7 @@ model Location {
   transfersTo    StockTransfer[] @relation("TransferTo")
   batches        ProductBatch[]
   cashSessions   CashSession[]
+  expenses       Expense[]
 }
 
 // Session de caisse : montant d'ouverture déclaré par un vendeur, comparé au
@@ -94,6 +96,8 @@ model CashSession {
   openedAt       DateTime  @default(now())
   expectedAmount Decimal?  @db.Decimal(10, 2)
   otherAmount    Decimal?  @db.Decimal(10, 2)
+  cashExpenses   Decimal?  @db.Decimal(10, 2)
+  otherExpenses  Decimal?  @db.Decimal(10, 2)
   countedAmount  Decimal?  @db.Decimal(10, 2)
   difference     Decimal?  @db.Decimal(10, 2)
   note           String?
@@ -290,6 +294,32 @@ model Payment {
   createdById  String
   createdBy    User          @relation(fields: [createdById], references: [id])
   createdAt    DateTime      @default(now())
+}
+
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+
+  expenses  Expense[]
+}
+
+// Dépense du cabinet (loyer, salaires, transport…). Une dépense en espèces
+// est soustraite du montant théorique à la clôture de caisse ; une dépense
+// réglée autrement (virement, Mvola…) n'est enregistrée qu'à titre comptable.
+model Expense {
+  id          String          @id @default(cuid())
+  date        DateTime        @default(now())
+  amount      Decimal         @db.Decimal(10, 2)
+  categoryId  String
+  category    ExpenseCategory @relation(fields: [categoryId], references: [id])
+  locationId  String
+  location    Location        @relation(fields: [locationId], references: [id])
+  method      PaymentMethod   @default(CASH)
+  note        String?
+  createdById String
+  createdBy   User            @relation(fields: [createdById], references: [id])
+  createdAt   DateTime        @default(now())
 }
 
 model SaleItem {

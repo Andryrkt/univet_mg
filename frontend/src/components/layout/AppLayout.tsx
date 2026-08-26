@@ -20,6 +20,7 @@ import {
   UserCogIcon,
   SettingsIcon,
   LifeBuoyIcon,
+  ReceiptIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "../ui/icons";
@@ -69,6 +70,13 @@ const navGroups: NavGroup[] = [
       { to: "/historique-ventes", label: "Historique des ventes", icon: ClockIcon },
       { to: "/caisse", label: "Caisse", icon: CoinsIcon },
       { to: "/clients", label: "Clients", icon: UsersIcon },
+    ],
+  },
+  {
+    label: "Dépenses",
+    items: [
+      { to: "/depenses", label: "Dépenses", icon: ReceiptIcon },
+      { to: "/categories-depenses", label: "Catégories de dépenses", icon: TagIcon, roles: ["ADMIN", "MODERATOR"] },
     ],
   },
   {

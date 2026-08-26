@@ -25,9 +25,11 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
       const closedAt = new Date();
       const totals = await computeCashSessionTotals(tx, { locationId: existing.locationId, openedAt: existing.openedAt, until: closedAt });
-      const cashCollected = totals.cash ?? new Prisma.Decimal(0);
-      const otherCollected = totals.other ?? new Prisma.Decimal(0);
-      const expectedAmount = existing.openingAmount.add(cashCollected);
+      const cashCollected = totals.cashPayments ?? new Prisma.Decimal(0);
+      const otherCollected = totals.otherPayments ?? new Prisma.Decimal(0);
+      const cashExpenses = totals.cashExpenses ?? new Prisma.Decimal(0);
+      const otherExpenses = totals.otherExpenses ?? new Prisma.Decimal(0);
+      const expectedAmount = existing.openingAmount.add(cashCollected).sub(cashExpenses);
       const difference = new Prisma.Decimal(countedAmount).sub(expectedAmount);
 
       return tx.cashSession.update({
@@ -37,6 +39,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
           closedById: user.sub,
           expectedAmount,
           otherAmount: otherCollected,
+          cashExpenses,
+          otherExpenses,
           countedAmount,
           difference,
           note: body.note || null,

@@ -71,8 +71,17 @@ const sections: Section[] = [
     title: "Ouvrir et clôturer la caisse (fond de caisse)",
     content: [
       "Dans « Caisse », choisissez l'emplacement puis déclarez le fond de caisse (montant de départ) en début de service.",
-      "En fin de service, comptez l'argent réellement présent et saisissez-le dans « Montant compté à la clôture ». L'application calcule automatiquement le montant théorique (fond de départ + ventes en espèces) et l'écart.",
-      "Seuls les paiements en espèces comptent dans ce calcul — un paiement par Mvola, carte, etc. n'affecte pas la caisse.",
+      "En fin de service, comptez l'argent réellement présent et saisissez-le dans « Montant compté à la clôture ». L'application calcule automatiquement le montant théorique (fond de départ + ventes en espèces − dépenses en espèces) et l'écart.",
+      "Seuls les paiements et dépenses en espèces comptent dans ce calcul — un paiement ou une dépense par Mvola, carte, etc. n'affecte pas la caisse (affiché à titre informatif uniquement).",
+    ],
+  },
+  {
+    id: "depenses",
+    title: "Enregistrer une dépense",
+    content: [
+      "Dans « Dépenses », enregistrez chaque sortie d'argent du cabinet (loyer, salaires, transport, fournitures…) avec sa catégorie, son emplacement et son mode de paiement.",
+      "Une dépense en espèces est automatiquement déduite du montant théorique de la caisse à sa prochaine clôture. Une dépense par un autre moyen (virement, Mvola…) est seulement enregistrée pour le suivi comptable.",
+      "Les catégories de dépenses se gèrent dans « Catégories de dépenses » (réservé aux Admins et Modérateurs) : vous pouvez en ajouter, renommer ou supprimer selon vos besoins.",
     ],
   },
   {

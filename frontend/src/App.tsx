@@ -23,6 +23,8 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { LocationsPage } from "./pages/LocationsPage";
 import { StockTransfersPage } from "./pages/StockTransfersPage";
 import { CashSessionPage } from "./pages/CashSessionPage";
+import { ExpensesPage } from "./pages/ExpensesPage";
+import { ExpenseCategoriesPage } from "./pages/ExpenseCategoriesPage";
 import { HelpPage } from "./pages/HelpPage";
 
 function App() {
@@ -115,6 +117,15 @@ function App() {
         <Route path="/ventes" element={<SalesPage />} />
         <Route path="/historique-ventes" element={<SalesHistoryPage />} />
         <Route path="/caisse" element={<CashSessionPage />} />
+        <Route path="/depenses" element={<ExpensesPage />} />
+        <Route
+          path="/categories-depenses"
+          element={
+            <ProtectedRoute roles={["ADMIN", "MODERATOR"]}>
+              <ExpenseCategoriesPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/mouvements-stock"
           element={

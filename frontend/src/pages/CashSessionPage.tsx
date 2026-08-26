@@ -178,12 +178,27 @@ export function CashSessionPage() {
                     {formatAmount(openSession.liveOtherCollected ?? 0)} Ar
                   </p>
                 </div>
+                <div>
+                  <p className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    Dépenses en espèces
+                    <HelpTooltip text="Total des dépenses réglées en espèces depuis l'ouverture (enregistrées dans « Dépenses »). Ce montant est déduit du montant théorique de la caisse." />
+                  </p>
+                  <p className="font-medium text-red-600 dark:text-red-400">
+                    − {formatAmount(openSession.liveCashExpenses ?? 0)} Ar
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500 dark:text-slate-400">Dépenses en autre</p>
+                  <p className="font-medium text-slate-900 dark:text-slate-100">
+                    {formatAmount(openSession.liveOtherExpenses ?? 0)} Ar
+                  </p>
+                </div>
               </div>
               <AmountInput
                 label={
                   <span className="inline-flex items-center gap-1.5">
                     Montant compté à la clôture
-                    <HelpTooltip text="Comptez l'argent réellement présent dans le tiroir-caisse et saisissez-le ici. L'application le compare au montant théorique (fond d'ouverture + ventes en espèces) pour détecter un écart." />
+                    <HelpTooltip text="Comptez l'argent réellement présent dans le tiroir-caisse et saisissez-le ici. L'application le compare au montant théorique (fond d'ouverture + ventes en espèces − dépenses en espèces) pour détecter un écart." />
                   </span>
                 }
                 required
@@ -215,6 +230,7 @@ export function CashSessionPage() {
                   <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Attendu (espèces)</th>
                   <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Compté</th>
                   <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Écart</th>
+                  <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Dépenses espèces</th>
                   <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Autre (info)</th>
                 </tr>
               </thead>
@@ -241,6 +257,9 @@ export function CashSessionPage() {
                       >
                         {diff > 0 ? "+" : ""}
                         {formatAmount(diff)}
+                      </td>
+                      <td className="px-4 py-2 text-right text-slate-500 dark:text-slate-400">
+                        {s.cashExpenses !== null ? formatAmount(s.cashExpenses) : "—"}
                       </td>
                       <td className="px-4 py-2 text-right text-slate-500 dark:text-slate-400">
                         {s.otherAmount !== null ? formatAmount(s.otherAmount) : "—"}
