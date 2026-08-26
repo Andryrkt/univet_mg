@@ -19,6 +19,7 @@ import {
   UsersIcon,
   UserCogIcon,
   SettingsIcon,
+  LifeBuoyIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from "../ui/icons";
@@ -33,7 +34,10 @@ type NavGroup = { label: string; items: NavItem[] };
 const navGroups: NavGroup[] = [
   {
     label: "Général",
-    items: [{ to: "/", label: "Tableau de bord", icon: HomeIcon, end: true }],
+    items: [
+      { to: "/", label: "Tableau de bord", icon: HomeIcon, end: true },
+      { to: "/aide", label: "Aide", icon: LifeBuoyIcon },
+    ],
   },
   {
     label: "Catalogue",

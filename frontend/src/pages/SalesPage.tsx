@@ -8,6 +8,7 @@ import { AmountInput } from "../components/ui/AmountInput";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
 import { PlusIcon } from "../components/ui/icons";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 import { formatAmount } from "../lib/format";
 
 const emptyClientForm = { name: "", phone: "", email: "", address: "" };
@@ -298,7 +299,10 @@ export function SalesPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Paiement</label>
+            <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+              Paiement
+              <HelpTooltip text="« Payé intégralement » = vente réglée maintenant. « Paiement partiel » = le client paie une partie, le reste reste dû et pourra être encaissé plus tard depuis l'historique des ventes. « À crédit » = rien n'est payé maintenant." />
+            </label>
             <div className="flex flex-col gap-1.5 text-sm text-slate-700 dark:text-slate-300">
               <label className="flex items-center gap-2">
                 <input
@@ -364,7 +368,12 @@ export function SalesPage() {
               <>
                 {paymentMethod === "CASH" && (
                   <AmountInput
-                    label="Montant reçu (espèces)"
+                    label={
+                      <span className="inline-flex items-center gap-1.5">
+                        Montant reçu (espèces)
+                        <HelpTooltip text="Ce que le client vous donne en billets/pièces. S'il donne plus que le total, l'application calcule automatiquement le rendu à lui remettre." />
+                      </span>
+                    }
                     placeholder={String(total)}
                     value={cashReceived}
                     onChange={(e) => setCashReceived(e.target.value)}

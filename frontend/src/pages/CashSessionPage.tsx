@@ -6,6 +6,7 @@ import { AmountInput } from "../components/ui/AmountInput";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
 import { Pagination } from "../components/ui/Pagination";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 import { formatAmount } from "../lib/format";
 
 const PAGE_SIZE = 15;
@@ -140,7 +141,12 @@ export function CashSessionPage() {
               <h2 className="font-semibold text-slate-900 dark:text-slate-100">Ouvrir la caisse</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">Aucune session ouverte pour cet emplacement.</p>
               <AmountInput
-                label="Fond de caisse (montant d'ouverture)"
+                label={
+                  <span className="inline-flex items-center gap-1.5">
+                    Fond de caisse (montant d'ouverture)
+                    <HelpTooltip text="La somme d'argent présente dans le tiroir-caisse au début du service, avant toute vente. Elle sert de base au calcul du montant théorique à la clôture." />
+                  </span>
+                }
                 required
                 value={openingAmount}
                 onChange={(e) => setOpeningAmount(e.target.value)}
@@ -157,7 +163,12 @@ export function CashSessionPage() {
                 fond de {formatAmount(openSession.openingAmount)} Ar
               </p>
               <AmountInput
-                label="Montant compté à la clôture"
+                label={
+                  <span className="inline-flex items-center gap-1.5">
+                    Montant compté à la clôture
+                    <HelpTooltip text="Comptez l'argent réellement présent dans le tiroir-caisse et saisissez-le ici. L'application le compare au montant théorique (fond d'ouverture + ventes en espèces) pour détecter un écart." />
+                  </span>
+                }
                 required
                 value={countedAmount}
                 onChange={(e) => setCountedAmount(e.target.value)}

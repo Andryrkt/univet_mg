@@ -23,6 +23,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { LocationsPage } from "./pages/LocationsPage";
 import { StockTransfersPage } from "./pages/StockTransfersPage";
 import { CashSessionPage } from "./pages/CashSessionPage";
+import { HelpPage } from "./pages/HelpPage";
 
 function App() {
   return (
@@ -154,6 +155,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/aide" element={<HelpPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

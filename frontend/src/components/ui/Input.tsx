@@ -1,6 +1,6 @@
-import { forwardRef, useId, type InputHTMLAttributes } from "react";
+import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from "react";
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & { label?: string };
+type InputProps = InputHTMLAttributes<HTMLInputElement> & { label?: ReactNode };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(({ label, className = "", id, ...props }, ref) => {
   const generatedId = useId();

@@ -197,3 +197,23 @@ export function XIcon({ className = "h-4 w-4" }: IconProps) {
     </svg>
   );
 }
+
+export function HelpCircleIcon({ className = "h-4 w-4" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.3a2.5 2.5 0 1 1 3.7 2.2c-.8.5-1.2 1-1.2 2" />
+      <circle cx="12" cy="16.5" r="0.1" fill="currentColor" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+export function LifeBuoyIcon({ className = "h-5 w-5" }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="3.5" />
+      <path d="M6.3 6.3l3.1 3.1M17.7 6.3l-3.1 3.1M6.3 17.7l3.1-3.1M17.7 17.7l-3.1-3.1" />
+    </svg>
+  );
+}

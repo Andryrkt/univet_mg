@@ -1,7 +1,7 @@
-import { forwardRef, useId, useLayoutEffect, useRef, type ChangeEvent, type InputHTMLAttributes } from "react";
+import { forwardRef, useId, useLayoutEffect, useRef, type ChangeEvent, type InputHTMLAttributes, type ReactNode } from "react";
 
 type AmountInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "type"> & {
-  label?: string;
+  label?: ReactNode;
   value: string;
   onChange: (e: { target: { value: string } }) => void;
 };
