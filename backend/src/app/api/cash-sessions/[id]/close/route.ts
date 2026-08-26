@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
+import { computeCashSessionTotals } from "@/lib/cash-session-totals";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -23,15 +24,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
       }
 
       const closedAt = new Date();
-      const cashPayments = await tx.payment.aggregate({
-        where: {
-          method: "CASH",
-          createdAt: { gte: existing.openedAt, lte: closedAt },
-          sale: { locationId: existing.locationId },
-        },
-        _sum: { amount: true },
-      });
-      const cashCollected = cashPayments._sum.amount ?? new Prisma.Decimal(0);
+      const totals = await computeCashSessionTotals(tx, { locationId: existing.locationId, openedAt: existing.openedAt, until: closedAt });
+      const cashCollected = totals.cash ?? new Prisma.Decimal(0);
+      const otherCollected = totals.other ?? new Prisma.Decimal(0);
       const expectedAmount = existing.openingAmount.add(cashCollected);
       const difference = new Prisma.Decimal(countedAmount).sub(expectedAmount);
 
@@ -41,6 +36,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
           closedAt,
           closedById: user.sub,
           expectedAmount,
+          otherAmount: otherCollected,
           countedAmount,
           difference,
           note: body.note || null,

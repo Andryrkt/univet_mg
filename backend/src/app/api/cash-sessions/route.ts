@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireRole, ApiError, handleApiError } from "@/lib/api-helpers";
 import { parsePagination, paginatedResponse } from "@/lib/pagination";
+import { computeCashSessionTotals } from "@/lib/cash-session-totals";
 
 export async function GET(request: Request) {
   try {
@@ -23,16 +24,28 @@ export async function GET(request: Request) {
       closedBy: { select: { id: true, name: true } },
     };
 
+    // Pour une session encore ouverte, on calcule en direct ce qui a déjà été
+    // encaissé (espèces / autre) depuis l'ouverture, pour affichage seulement.
+    async function withLiveTotals<T extends { closedAt: Date | null; locationId: string; openedAt: Date }>(sessions: T[]) {
+      return Promise.all(
+        sessions.map(async (s) => {
+          if (s.closedAt) return s;
+          const totals = await computeCashSessionTotals(prisma, { locationId: s.locationId, openedAt: s.openedAt });
+          return { ...s, liveCashCollected: totals.cash, liveOtherCollected: totals.other };
+        })
+      );
+    }
+
     if (pagination) {
       const [items, total] = await Promise.all([
         prisma.cashSession.findMany({ where, include, orderBy: { openedAt: "desc" }, skip: pagination.skip, take: pagination.take }),
         prisma.cashSession.count({ where }),
       ]);
-      return NextResponse.json(paginatedResponse(items, total, pagination));
+      return NextResponse.json(paginatedResponse(await withLiveTotals(items), total, pagination));
     }
 
     const sessions = await prisma.cashSession.findMany({ where, include, orderBy: { openedAt: "desc" }, take: 200 });
-    return NextResponse.json(sessions);
+    return NextResponse.json(await withLiveTotals(sessions));
   } catch (error) {
     return handleApiError(error);
   }

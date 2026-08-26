@@ -93,6 +93,7 @@ model CashSession {
   openedBy       User      @relation("CashSessionOpenedBy", fields: [openedById], references: [id])
   openedAt       DateTime  @default(now())
   expectedAmount Decimal?  @db.Decimal(10, 2)
+  otherAmount    Decimal?  @db.Decimal(10, 2)
   countedAmount  Decimal?  @db.Decimal(10, 2)
   difference     Decimal?  @db.Decimal(10, 2)
   note           String?

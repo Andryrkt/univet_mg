@@ -151,11 +151,14 @@ export type CashSession = {
   openedBy: { id: string; name: string };
   openedAt: string;
   expectedAmount: string | null;
+  otherAmount: string | null;
   countedAmount: string | null;
   difference: string | null;
   note: string | null;
   closedBy: { id: string; name: string } | null;
   closedAt: string | null;
+  liveCashCollected?: string | null;
+  liveOtherCollected?: string | null;
 };
 
 export type Sale = {

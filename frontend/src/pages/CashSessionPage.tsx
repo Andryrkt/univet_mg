@@ -162,6 +162,23 @@ export function CashSessionPage() {
                 Ouverte le {new Date(openSession.openedAt).toLocaleString()} par {openSession.openedBy.name} —
                 fond de {formatAmount(openSession.openingAmount)} Ar
               </p>
+              <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-50 dark:bg-slate-950 p-3 text-sm">
+                <div>
+                  <p className="text-slate-500 dark:text-slate-400">Encaissé en espèces</p>
+                  <p className="font-medium text-slate-900 dark:text-slate-100">
+                    {formatAmount(openSession.liveCashCollected ?? 0)} Ar
+                  </p>
+                </div>
+                <div>
+                  <p className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                    Encaissé en autre (Mvola, carte…)
+                    <HelpTooltip text="Total informatif des paiements non-espèces depuis l'ouverture. N'entre pas dans le calcul du montant théorique de la caisse." />
+                  </p>
+                  <p className="font-medium text-slate-900 dark:text-slate-100">
+                    {formatAmount(openSession.liveOtherCollected ?? 0)} Ar
+                  </p>
+                </div>
+              </div>
               <AmountInput
                 label={
                   <span className="inline-flex items-center gap-1.5">
@@ -195,9 +212,10 @@ export function CashSessionPage() {
                   <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Ouverte le</th>
                   <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Fermée le</th>
                   <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Ouverture</th>
-                  <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Attendu</th>
+                  <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Attendu (espèces)</th>
                   <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Compté</th>
                   <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Écart</th>
+                  <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Autre (info)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -223,6 +241,9 @@ export function CashSessionPage() {
                       >
                         {diff > 0 ? "+" : ""}
                         {formatAmount(diff)}
+                      </td>
+                      <td className="px-4 py-2 text-right text-slate-500 dark:text-slate-400">
+                        {s.otherAmount !== null ? formatAmount(s.otherAmount) : "—"}
                       </td>
                     </tr>
                   );
