@@ -9,6 +9,7 @@ export type User = {
   role: Role;
   isActive?: boolean;
   createdAt?: string;
+  onboardingCompletedAt?: string | null;
 };
 
 export type Unit = { id: string; name: string; symbol: string | null };

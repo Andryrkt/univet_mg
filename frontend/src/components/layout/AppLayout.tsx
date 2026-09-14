@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useSettings } from "../../context/SettingsContext";
+import { useTour } from "../../context/TourContext";
+import { TourOverlay } from "../onboarding/TourOverlay";
 import { ThemeToggle } from "../ui/ThemeToggle";
 import {
   HomeIcon,
@@ -91,6 +93,7 @@ const navGroups: NavGroup[] = [
 export function AppLayout() {
   const { user, logout } = useAuth();
   const { settings } = useSettings();
+  const { active: tourActive } = useTour();
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true");
 
   useEffect(() => {
@@ -113,6 +116,7 @@ export function AppLayout() {
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       <aside
+        data-tour="sidebar"
         className={`shrink-0 overflow-y-auto border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-[width] duration-200 ${
           collapsed ? "w-16" : "w-64"
         }`}
@@ -151,6 +155,7 @@ export function AppLayout() {
                     key={item.to}
                     to={item.to}
                     end={item.end}
+                    data-tour={`nav-${item.to}`}
                     title={collapsed ? item.label : undefined}
                     className={({ isActive }) =>
                       `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium ${
@@ -176,7 +181,7 @@ export function AppLayout() {
         <header className="flex items-center justify-end border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3">
           <div className="flex items-center gap-3 text-sm">
             <ThemeToggle />
-            <span className="text-slate-600 dark:text-slate-400">
+            <span data-tour="header-user" className="text-slate-600 dark:text-slate-400">
               {user.name} · <span className="font-medium">{user.role}</span>
             </span>
             <button onClick={() => logout()} className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400">
@@ -188,6 +193,7 @@ export function AppLayout() {
           <Outlet />
         </main>
       </div>
+      {tourActive && <TourOverlay />}
     </div>
   );
 }

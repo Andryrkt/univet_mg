@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useTour } from "../context/TourContext";
+import { Button } from "../components/ui/Button";
 import { ChevronRightIcon } from "../components/ui/icons";
 
 type Section = { id: string; title: string; content: string[] };
@@ -104,6 +106,7 @@ const sections: Section[] = [
 
 export function HelpPage() {
   const [open, setOpen] = useState<Record<string, boolean>>({ vente: true });
+  const { start } = useTour();
 
   function toggle(id: string) {
     setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -111,11 +114,16 @@ export function HelpPage() {
 
   return (
     <div className="max-w-3xl space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Aide</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Guide rapide des tâches courantes dans l'application.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Aide</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Guide rapide des tâches courantes dans l'application.
+          </p>
+        </div>
+        <Button variant="secondary" onClick={start}>
+          Rejouer la visite guidée
+        </Button>
       </div>
 
       <div className="space-y-2">
