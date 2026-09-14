@@ -10,6 +10,7 @@ import { Input } from "../components/ui/Input";
 import { AmountInput } from "../components/ui/AmountInput";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 import { PlusIcon } from "../components/ui/icons";
 import { SearchInput } from "../components/ui/SearchInput";
 
@@ -266,7 +267,10 @@ export function ProductsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Produits</h1>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Produits</h1>
+          <HelpTooltip text="Cliquez sur « Ajouter » pour créer un produit. Le tableau liste sa catégorie, son unité, ses prix d'achat/vente et son stock total sur tous les emplacements (en rouge si sous le seuil d'alerte)." />
+        </div>
         {canWrite && (
           <Button onClick={openCreate}>
             <PlusIcon className="mr-1.5 h-4 w-4" />
@@ -289,14 +293,25 @@ export function ProductsPage() {
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Prix achat</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Prix vente</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Stock total</th>
-              {canWrite && <th className="px-4 py-2" />}
+              {canWrite && (
+                <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">
+                  <span className="inline-flex items-center justify-end gap-1.5">
+                    Actions
+                    <HelpTooltip text="« Unités de vente » : ajoute d'autres unités pour vendre ce produit (ex. à la boîte en plus de la pièce). « Ajuster stock » : corrige la quantité en stock. « Modifier » : change les informations du produit. « Désactiver » : le retire des ventes sans supprimer son historique." />
+                  </span>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredProducts.length === 0 && (
               <tr>
                 <td colSpan={canWrite ? 7 : 6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  {search ? "Aucun résultat" : "Aucun produit"}
+                  {search
+                    ? "Aucun résultat"
+                    : canWrite
+                      ? "Aucun produit. Cliquez sur « Ajouter » pour créer le premier."
+                      : "Aucun produit"}
                 </td>
               </tr>
             )}
@@ -352,9 +367,23 @@ export function ProductsPage() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? "Modifier le produit" : "Nouveau produit"}>
         <form onSubmit={handleSubmit} className="space-y-3">
           <Input label="Nom" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <Input label="Référence (SKU)" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
+          <Input
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                Référence (SKU)
+                <HelpTooltip text="Code interne optionnel pour retrouver facilement ce produit (ex. code-barres, référence fournisseur). Laissez vide si vous n'en avez pas." />
+              </span>
+            }
+            value={form.sku}
+            onChange={(e) => setForm({ ...form, sku: e.target.value })}
+          />
           <Select
-            label="Catégorie"
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                Catégorie
+                <HelpTooltip text="Tapez le nom d'une catégorie existante pour la sélectionner. Si elle n'existe pas encore, tapez son nom puis cliquez sur « + Créer » : elle sera créée automatiquement (un code à 3 lettres est généré pour vous)." />
+              </span>
+            }
             required
             value={form.categoryId}
             onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
@@ -370,7 +399,12 @@ export function ProductsPage() {
             ))}
           </Select>
           <Select
-            label="Unité"
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                Unité
+                <HelpTooltip text="Choisissez la plus petite unité dans laquelle le produit peut être vendu (ex. comprimé, pièce, ml — pas « boîte » si elle contient plusieurs pièces). Vous pourrez ajouter des unités de vente plus grandes (ex. la boîte) après l'enregistrement, via « Unités de vente ». Comme pour la catégorie, tapez un nom inexistant puis « + Créer » pour ajouter une nouvelle unité à la volée." />
+              </span>
+            }
             required
             value={form.unitId}
             onChange={(e) => setForm({ ...form, unitId: e.target.value })}
@@ -392,14 +426,24 @@ export function ProductsPage() {
               onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })}
             />
             <AmountInput
-              label="Prix de vente"
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  Prix de vente
+                  <HelpTooltip text="Prix de vente pour l'unité de stock choisie ci-dessus. D'autres unités de vente avec leur propre prix (ex. vente à la boîte) pourront être ajoutées après l'enregistrement, via « Unités de vente »." />
+                </span>
+              }
               required
               value={form.sellingPrice}
               onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
             />
           </div>
           <Input
-            label="Seuil d'alerte stock"
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                Seuil d'alerte stock
+                <HelpTooltip text="Quand le stock total tombe à ce niveau ou en dessous, le produit s'affiche en rouge dans la liste et une alerte apparaît sur le tableau de bord." />
+              </span>
+            }
             type="number"
             min="0"
             value={form.alertThreshold}

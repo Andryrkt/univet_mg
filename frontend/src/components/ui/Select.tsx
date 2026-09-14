@@ -13,7 +13,7 @@ import {
 type ChangeLike = { target: { value: string } };
 
 type SelectProps = {
-  label?: string;
+  label?: ReactNode;
   value: string;
   onChange: (e: ChangeLike) => void;
   required?: boolean;
