@@ -4,6 +4,7 @@ import type { Location } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Modal } from "../components/ui/Modal";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 import { PlusIcon } from "../components/ui/icons";
 import { SearchInput } from "../components/ui/SearchInput";
 
@@ -92,7 +93,10 @@ export function LocationsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Emplacements</h1>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Emplacements</h1>
+          <HelpTooltip text="Vos points de vente/dépôts. Chacun a son propre stock, indépendant des autres — un produit peut être en stock à un emplacement et épuisé à un autre. N'importe quel utilisateur peut opérer depuis n'importe quel emplacement actif." />
+        </div>
         <Button onClick={openCreate}>
           <PlusIcon className="mr-1.5 h-4 w-4" />
           Ajouter
@@ -110,7 +114,12 @@ export function LocationsPage() {
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Nom</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Adresse</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Téléphone</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Statut</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1.5">
+                  Statut
+                  <HelpTooltip text="Désactiver un emplacement le retire des listes de sélection (vente, transfert, réception...) sans supprimer son historique ni son stock déjà enregistré." />
+                </span>
+              </th>
               <th className="px-4 py-2" />
             </tr>
           </thead>
@@ -118,7 +127,7 @@ export function LocationsPage() {
             {filteredLocations.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  {search ? "Aucun résultat" : "Aucun emplacement"}
+                  {search ? "Aucun résultat" : "Aucun emplacement. Cliquez sur « Ajouter » pour créer le premier."}
                 </td>
               </tr>
             ) : (

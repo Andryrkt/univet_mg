@@ -6,6 +6,7 @@ import { Input } from "../components/ui/Input";
 import { AmountInput } from "../components/ui/AmountInput";
 import { Select } from "../components/ui/Select";
 import { SearchInput } from "../components/ui/SearchInput";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 import { Pagination } from "../components/ui/Pagination";
 import { formatAmount } from "../lib/format";
 
@@ -98,7 +99,10 @@ export function ExpensesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Dépenses</h1>
+      <div className="flex items-center gap-1.5">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Dépenses</h1>
+        <HelpTooltip text="Enregistrez chaque sortie d'argent du cabinet. Une dépense en espèces est automatiquement déduite du montant théorique de la caisse à sa prochaine clôture ; une dépense par un autre moyen (virement, Mvola…) est seulement enregistrée pour le suivi comptable." />
+      </div>
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -131,7 +135,10 @@ export function ExpensesPage() {
         </Select>
         <AmountInput label="Montant" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Mode de paiement</label>
+          <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+            Mode de paiement
+            <HelpTooltip text="« Espèces » impacte le calcul de la caisse à sa prochaine clôture. « Autre » (virement, Mvola…) est seulement enregistré pour le suivi comptable, sans effet sur la caisse." />
+          </label>
           <div className="flex gap-4 pt-1.5 text-sm text-slate-700 dark:text-slate-300">
             <label className="flex items-center gap-2">
               <input
@@ -185,7 +192,7 @@ export function ExpensesPage() {
             {expenses.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  {search ? "Aucun résultat" : "Aucune dépense"}
+                  {search ? "Aucun résultat" : "Aucune dépense. Utilisez le formulaire ci-dessus pour en enregistrer une."}
                 </td>
               </tr>
             ) : (

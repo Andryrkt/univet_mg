@@ -6,6 +6,7 @@ import { Input } from "../components/ui/Input";
 import { PasswordInput } from "../components/ui/PasswordInput";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 import { PlusIcon } from "../components/ui/icons";
 import { SearchInput } from "../components/ui/SearchInput";
 
@@ -72,7 +73,10 @@ export function UsersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Utilisateurs</h1>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Utilisateurs</h1>
+          <HelpTooltip text="Gérez les comptes de votre équipe et leurs rôles. Désactiver un compte l'empêche de se connecter, sans supprimer son historique (ventes, mouvements de stock…). N'importe quel utilisateur actif peut opérer depuis n'importe quel emplacement." />
+        </div>
         <Button onClick={() => setModalOpen(true)}>
           <PlusIcon className="mr-1.5 h-4 w-4" />
           Ajouter
@@ -89,8 +93,18 @@ export function UsersPage() {
             <tr>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Nom</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Email</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Rôle</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Statut</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1.5">
+                  Rôle
+                  <HelpTooltip text="Admin : accès complet, y compris utilisateurs et paramètres. Modérateur : catalogue, commandes fournisseurs, stock et ventes, mais pas les utilisateurs ni les paramètres. Vendeur : ventes, clients et caisse ; lecture seule sur le catalogue." />
+                </span>
+              </th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1.5">
+                  Statut
+                  <HelpTooltip text="Un compte désactivé ne peut plus se connecter, mais son historique reste conservé." />
+                </span>
+              </th>
               <th className="px-4 py-2" />
             </tr>
           </thead>
@@ -130,12 +144,27 @@ export function UsersPage() {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
           <PasswordInput
-            label="Mot de passe"
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                Mot de passe
+                <HelpTooltip text="Mot de passe initial du compte, à communiquer vous-même à l'utilisateur." />
+              </span>
+            }
             required
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
-          <Select label="Rôle" required value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+          <Select
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                Rôle
+                <HelpTooltip text="Admin : accès complet, y compris utilisateurs et paramètres. Modérateur : catalogue, commandes fournisseurs, stock et ventes, mais pas les utilisateurs ni les paramètres. Vendeur : ventes, clients et caisse ; lecture seule sur le catalogue." />
+              </span>
+            }
+            required
+            value={form.role}
+            onChange={(e) => setForm({ ...form, role: e.target.value })}
+          >
             <option value="ADMIN">Admin</option>
             <option value="MODERATOR">Modérateur</option>
             <option value="SELLER">Vendeur</option>

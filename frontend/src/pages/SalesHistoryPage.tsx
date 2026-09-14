@@ -10,6 +10,7 @@ import { Button } from "../components/ui/Button";
 import { Pagination } from "../components/ui/Pagination";
 import { formatAmount } from "../lib/format";
 import { SearchInput } from "../components/ui/SearchInput";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 import { useAuth } from "../context/AuthContext";
 import { buildSellOptions } from "./SalesPage";
 
@@ -234,7 +235,10 @@ export function SalesHistoryPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Historique des ventes</h1>
+      <div className="flex items-center gap-1.5">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Historique des ventes</h1>
+        <HelpTooltip text="Cliquez sur une vente pour voir son détail : encaisser un paiement en attente, ajouter des produits si le client est encore au comptoir, imprimer la facture/le ticket, ou annuler la vente." />
+      </div>
 
       <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par client, emplacement, vendeur…" className="max-w-sm" />
 
@@ -248,7 +252,12 @@ export function SalesHistoryPage() {
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Client</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Emplacement</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Vendeur</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Paiement</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1.5">
+                  Paiement
+                  <HelpTooltip text="« Payé » : rien ne reste dû. « Partiel » : une partie a été encaissée, le reste est enregistrable depuis le détail. « Impayé » : vente à crédit, rien encaissé pour l'instant." />
+                </span>
+              </th>
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Total</th>
             </tr>
           </thead>
@@ -396,7 +405,12 @@ export function SalesHistoryPage() {
                   <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{paymentError}</p>
                 )}
                 <AmountInput
-                  label="Enregistrer un paiement"
+                  label={
+                    <span className="inline-flex items-center gap-1.5">
+                      Enregistrer un paiement
+                      <HelpTooltip text="Montant que le client vous remet maintenant pour réduire (ou solder) le « Reste dû » affiché ci-dessus." />
+                    </span>
+                  }
                   required
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
@@ -446,8 +460,9 @@ export function SalesHistoryPage() {
 
             {!selected.cancelledAt && (
               <form onSubmit={handleAddItem} className="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-3">
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                <p className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
                   Ajouter des produits (client déjà en caisse)
+                  <HelpTooltip text="Ajoute une ligne supplémentaire à cette vente déjà validée — utile si le client, encore au comptoir, veut d'autres produits. Le paiement de cette ligne se gère séparément (intégral, partiel ou à crédit)." />
                 </p>
                 {addError && (
                   <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{addError}</p>

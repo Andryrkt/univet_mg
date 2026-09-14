@@ -4,6 +4,7 @@ import type { Location, Paginated, Product, StockTransfer } from "../lib/types";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { Select } from "../components/ui/Select";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 import { SearchInput } from "../components/ui/SearchInput";
 import { Pagination } from "../components/ui/Pagination";
 
@@ -92,7 +93,10 @@ export function StockTransfersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Transferts de stock</h1>
+      <div className="flex items-center gap-1.5">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Transferts de stock</h1>
+        <HelpTooltip text="Déplace du stock d'un emplacement vers un autre (ex. réapprovisionner un point de vente depuis le dépôt). La date de péremption du lot transféré est automatiquement conservée à l'arrivée." />
+      </div>
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -111,7 +115,12 @@ export function StockTransfersPage() {
           ))}
         </Select>
         <Input
-          label={`Quantité${form.fromLocationId ? ` (disponible : ${availableAtSource})` : ""}`}
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              {`Quantité${form.fromLocationId ? ` (disponible : ${availableAtSource})` : ""}`}
+              <HelpTooltip text="Ne peut pas dépasser le stock disponible à l'emplacement source affiché entre parenthèses une fois « Depuis » choisi." />
+            </span>
+          }
           type="number"
           min="1"
           required
@@ -119,7 +128,12 @@ export function StockTransfersPage() {
           onChange={(e) => setForm({ ...form, quantity: e.target.value })}
         />
         <Select
-          label="Depuis"
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              Depuis
+              <HelpTooltip text="L'emplacement d'où le stock est retiré." />
+            </span>
+          }
           required
           value={form.fromLocationId}
           onChange={(e) => setForm({ ...form, fromLocationId: e.target.value })}
@@ -132,7 +146,12 @@ export function StockTransfersPage() {
           ))}
         </Select>
         <Select
-          label="Vers"
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              Vers
+              <HelpTooltip text="L'emplacement qui reçoit le stock." />
+            </span>
+          }
           required
           value={form.toLocationId}
           onChange={(e) => setForm({ ...form, toLocationId: e.target.value })}
@@ -177,7 +196,7 @@ export function StockTransfersPage() {
             {transfers.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  {search ? "Aucun résultat" : "Aucun transfert"}
+                  {search ? "Aucun résultat" : "Aucun transfert. Utilisez le formulaire ci-dessus pour en créer un."}
                 </td>
               </tr>
             ) : (

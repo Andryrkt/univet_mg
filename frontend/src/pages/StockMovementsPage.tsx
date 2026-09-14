@@ -3,6 +3,7 @@ import { api, ApiError } from "../lib/api";
 import type { Paginated, StockMovement } from "../lib/types";
 import { SearchInput } from "../components/ui/SearchInput";
 import { Pagination } from "../components/ui/Pagination";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 
 const PAGE_SIZE = 25;
 
@@ -53,7 +54,10 @@ export function StockMovementsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Mouvements de stock</h1>
+      <div className="flex items-center gap-1.5">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Mouvements de stock</h1>
+        <HelpTooltip text="Journal en lecture seule de tout ce qui fait varier le stock : réceptions fournisseur, ventes et annulations, ajustements manuels, transferts entre emplacements. Utile pour retracer l'historique d'un produit." />
+      </div>
 
       <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par produit, emplacement, type…" className="max-w-sm" />
 
@@ -66,8 +70,18 @@ export function StockMovementsPage() {
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Date</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Produit</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Emplacement</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Type</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Quantité</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1.5">
+                  Type
+                  <HelpTooltip text="« Réception fournisseur » et « Transfert (entrée) » ajoutent du stock. « Vente » et « Transfert (sortie) » en retirent. « Ajustement » = correction manuelle. « Annulation de vente » remet le stock vendu." />
+                </span>
+              </th>
+              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">
+                <span className="inline-flex items-center justify-end gap-1.5">
+                  Quantité
+                  <HelpTooltip text="En vert : entrée de stock. En rouge : sortie de stock." />
+                </span>
+              </th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Par</th>
             </tr>
           </thead>

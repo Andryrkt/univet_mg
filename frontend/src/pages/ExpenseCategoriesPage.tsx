@@ -9,6 +9,7 @@ export function ExpenseCategoriesPage() {
   return (
     <SimpleCrudPage<ExpenseCategory>
       title="Catégories de dépenses"
+      description="Classez vos dépenses (loyer, salaires, transport, fournitures…). Ajoutez, renommez ou supprimez librement selon vos besoins — elles sont ensuite proposées lors de l'enregistrement d'une dépense."
       endpoint="/expense-categories"
       canWrite={canWrite}
       fields={[{ name: "name", label: "Nom", required: true }]}

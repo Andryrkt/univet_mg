@@ -196,8 +196,21 @@ export function SalesPage() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="space-y-4 lg:col-span-2">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Point de vente</h1>
-        <Select label="Emplacement" required value={locationId} onChange={(e) => changeLocation(e.target.value)}>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Point de vente</h1>
+          <HelpTooltip text="Choisissez l'emplacement, ajoutez des produits au panier, sélectionnez le client puis le mode de paiement. Le stock affiché est celui de l'emplacement choisi." />
+        </div>
+        <Select
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              Emplacement
+              <HelpTooltip text="Détermine le stock disponible affiché ci-dessous et l'emplacement d'où le produit sera vendu. Changer d'emplacement vide le panier." />
+            </span>
+          }
+          required
+          value={locationId}
+          onChange={(e) => changeLocation(e.target.value)}
+        >
           <option value="">Sélectionner…</option>
           {locations.map((l) => (
             <option key={l.id} value={l.id}>
@@ -205,7 +218,17 @@ export function SalesPage() {
             </option>
           ))}
         </Select>
-        <Select value="" onChange={(e) => addOption(e.target.value)} disabled={!locationId}>
+        <Select
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              Ajouter un produit
+              <HelpTooltip text="Le stock disponible à cet emplacement est indiqué entre parenthèses. Un produit sans stock apparaît grisé et ne peut pas être ajouté." />
+            </span>
+          }
+          value=""
+          onChange={(e) => addOption(e.target.value)}
+          disabled={!locationId}
+        >
           <option value="">Ajouter un produit…</option>
           {options.map((o) => (
             <option key={o.key} value={o.key} disabled={o.maxQuantity <= 0}>

@@ -3,6 +3,7 @@ import { api, ApiError } from "../lib/api";
 import { useSettings } from "../context/SettingsContext";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 
 const emptyForm = { name: "", tagline: "", address: "", phone: "", email: "", expiryAlertDays: "90", slowMovingDays: "30" };
 
@@ -80,7 +81,12 @@ export function SettingsPage() {
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
         <Input
-          label="Alerte péremption (jours avant échéance)"
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              Alerte péremption (jours avant échéance)
+              <HelpTooltip text="Un lot est signalé dans « Produits qui périment bientôt » sur le tableau de bord dès qu'il reste ce nombre de jours ou moins avant sa date de péremption." />
+            </span>
+          }
           type="number"
           min="1"
           required
@@ -88,7 +94,12 @@ export function SettingsPage() {
           onChange={(e) => setForm({ ...form, expiryAlertDays: e.target.value })}
         />
         <Input
-          label="Produits peu vendus (jours sans vente pris en compte)"
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              Produits peu vendus (jours sans vente pris en compte)
+              <HelpTooltip text="Un produit actif est signalé dans « Produits peu vendus » sur le tableau de bord s'il n'a eu aucune vente depuis ce nombre de jours." />
+            </span>
+          }
           type="number"
           min="1"
           required
