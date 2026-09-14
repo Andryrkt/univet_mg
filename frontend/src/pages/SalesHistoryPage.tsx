@@ -39,6 +39,8 @@ export function SalesHistoryPage() {
   const [selected, setSelected] = useState<Sale | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -66,6 +68,8 @@ export function SalesHistoryPage() {
     try {
       const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
       if (debouncedSearch) params.set("search", debouncedSearch);
+      if (dateFrom) params.set("from", dateFrom);
+      if (dateTo) params.set("to", dateTo);
       const data = await api.get<Paginated<Sale>>(`/sales?${params.toString()}`);
       setSales(data.items);
       setTotal(data.total);
@@ -112,7 +116,7 @@ export function SalesHistoryPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, dateFrom, dateTo]);
 
   useEffect(() => {
     load(true).then((data) => {
@@ -125,7 +129,7 @@ export function SalesHistoryPage() {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedSearch]);
+  }, [page, debouncedSearch, dateFrom, dateTo]);
 
   useEffect(() => {
     loadProducts();
@@ -240,7 +244,33 @@ export function SalesHistoryPage() {
         <HelpTooltip text="Cliquez sur une vente pour voir son détail : encaisser un paiement en attente, ajouter des produits si le client est encore au comptoir, imprimer la facture/le ticket, ou annuler la vente." />
       </div>
 
-      <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par client, emplacement, vendeur…" className="max-w-sm" />
+      <div className="flex flex-wrap items-end gap-3">
+        <SearchInput value={search} onChange={setSearch} placeholder="Rechercher par client, emplacement, vendeur…" className="max-w-sm" />
+        <Input
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              Du
+              <HelpTooltip text="Filtre les ventes à partir de cette date incluse. Laissez vide pour ne pas limiter le début de la période." />
+            </span>
+          }
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+        />
+        <Input label="Au" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        {(dateFrom || dateTo) && (
+          <button
+            type="button"
+            onClick={() => {
+              setDateFrom("");
+              setDateTo("");
+            }}
+            className="pb-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+          >
+            Réinitialiser les dates
+          </button>
+        )}
+      </div>
 
       {error && <p className="rounded-lg bg-red-50 dark:bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</p>}
 
@@ -265,7 +295,7 @@ export function SalesHistoryPage() {
             {sales.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  {search ? "Aucun résultat" : "Aucune vente"}
+                  {search || dateFrom || dateTo ? "Aucun résultat" : "Aucune vente"}
                 </td>
               </tr>
             ) : (

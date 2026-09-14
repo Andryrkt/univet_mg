@@ -10,17 +10,29 @@ export async function GET(request: Request) {
     await requireRole(request, ["ADMIN", "MODERATOR", "SELLER"]);
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search")?.trim();
+    const from = searchParams.get("from")?.trim();
+    const to = searchParams.get("to")?.trim();
     const pagination = parsePagination(searchParams);
 
-    const where: Prisma.SaleWhereInput = search
-      ? {
-          OR: [
-            { client: { name: { contains: search, mode: "insensitive" } } },
-            { location: { name: { contains: search, mode: "insensitive" } } },
-            { seller: { name: { contains: search, mode: "insensitive" } } },
-          ],
-        }
-      : {};
+    const where: Prisma.SaleWhereInput = {
+      ...(search
+        ? {
+            OR: [
+              { client: { name: { contains: search, mode: "insensitive" } } },
+              { location: { name: { contains: search, mode: "insensitive" } } },
+              { seller: { name: { contains: search, mode: "insensitive" } } },
+            ],
+          }
+        : {}),
+      ...(from || to
+        ? {
+            createdAt: {
+              ...(from ? { gte: new Date(from) } : {}),
+              ...(to ? { lt: new Date(new Date(to).getTime() + 24 * 60 * 60 * 1000) } : {}),
+            },
+          }
+        : {}),
+    };
 
     const include = {
       client: true,
