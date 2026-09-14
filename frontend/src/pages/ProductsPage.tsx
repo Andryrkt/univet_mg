@@ -57,6 +57,7 @@ export function ProductsPage() {
   const [adjustTarget, setAdjustTarget] = useState<Product | null>(null);
   const [adjustForm, setAdjustForm] = useState({ locationId: "", quantity: "", note: "", expiryDate: "" });
   const [adjustSaving, setAdjustSaving] = useState(false);
+  const [adjustIsFirstStock, setAdjustIsFirstStock] = useState(false);
 
   const [sellUnitsTargetId, setSellUnitsTargetId] = useState<string | null>(null);
   const [newSellUnit, setNewSellUnit] = useState({ unitId: "", conversionFactor: "", sellingPrice: "" });
@@ -121,11 +122,16 @@ export function ProductsPage() {
     try {
       if (editing) {
         await api.patch(`/products/${editing.id}`, { ...payload, isActive: editing.isActive });
+        setModalOpen(false);
+        await load();
       } else {
-        await api.post("/products", payload);
+        const created = await api.post<Product>("/products", payload);
+        setModalOpen(false);
+        await load();
+        setAdjustTarget(created);
+        setAdjustForm({ locationId: locations[0]?.id ?? "", quantity: "", note: "", expiryDate: "" });
+        setAdjustIsFirstStock(true);
       }
-      setModalOpen(false);
-      await load();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur d'enregistrement");
     } finally {
@@ -187,6 +193,7 @@ export function ProductsPage() {
   function openAdjust(product: Product) {
     setAdjustTarget(product);
     setAdjustForm({ locationId: locations[0]?.id ?? "", quantity: "", note: "", expiryDate: "" });
+    setAdjustIsFirstStock(false);
     setError(null);
   }
 
@@ -203,6 +210,7 @@ export function ProductsPage() {
         expiryDate: Number(adjustForm.quantity) > 0 ? adjustForm.expiryDate || undefined : undefined,
       });
       setAdjustTarget(null);
+      setAdjustIsFirstStock(false);
       await load();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Erreur d'ajustement");
@@ -462,11 +470,26 @@ export function ProductsPage() {
 
       <Modal
         open={!!adjustTarget}
-        onClose={() => setAdjustTarget(null)}
-        title={adjustTarget ? `Ajuster le stock — ${adjustTarget.name}` : "Ajuster le stock"}
+        onClose={() => {
+          setAdjustTarget(null);
+          setAdjustIsFirstStock(false);
+        }}
+        title={
+          adjustTarget
+            ? adjustIsFirstStock
+              ? `Stock initial — ${adjustTarget.name}`
+              : `Ajuster le stock — ${adjustTarget.name}`
+            : "Ajuster le stock"
+        }
       >
         {adjustTarget && (
           <form onSubmit={handleAdjustSubmit} className="space-y-3">
+            {adjustIsFirstStock && (
+              <p className="rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">
+                Produit créé. Prochaine étape : indiquez son stock initial pour qu'il soit disponible à la vente —
+                ou fermez cette fenêtre si vous allez plutôt le réceptionner via une commande fournisseur.
+              </p>
+            )}
             {adjustTarget.stocks.length > 0 && (
               <ul className="rounded-lg border border-slate-200 dark:border-slate-800 text-sm">
                 {adjustTarget.stocks.map((s) => (
@@ -478,7 +501,12 @@ export function ProductsPage() {
               </ul>
             )}
             <Select
-              label="Emplacement"
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  Emplacement
+                  <HelpTooltip text="Le stock est suivi séparément pour chaque emplacement/point de vente. Choisissez celui concerné par cet ajustement." />
+                </span>
+              }
               required
               value={adjustForm.locationId}
               onChange={(e) => setAdjustForm({ ...adjustForm, locationId: e.target.value })}
@@ -510,7 +538,12 @@ export function ProductsPage() {
                 </ul>
               )}
             <Input
-              label="Quantité (positive pour ajouter, négative pour retirer)"
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  Quantité (positive pour ajouter, négative pour retirer)
+                  <HelpTooltip text="C'est une variation à appliquer au stock actuel de cet emplacement, pas la nouvelle quantité totale. Ex. : -2 retire 2 unités, peu importe le stock actuel." />
+                </span>
+              }
               type="number"
               step="1"
               required
@@ -519,14 +552,24 @@ export function ProductsPage() {
             />
             {Number(adjustForm.quantity) > 0 && (
               <Input
-                label="Date de péremption (optionnel)"
+                label={
+                  <span className="inline-flex items-center gap-1.5">
+                    Date de péremption (optionnel)
+                    <HelpTooltip text="Si vous en indiquez une, cette quantité forme un nouveau lot suivi séparément, visible dans « Mouvements de stock » et dans les alertes de péremption du tableau de bord." />
+                  </span>
+                }
                 type="date"
                 value={adjustForm.expiryDate}
                 onChange={(e) => setAdjustForm({ ...adjustForm, expiryDate: e.target.value })}
               />
             )}
             <Input
-              label="Motif (optionnel)"
+              label={
+                <span className="inline-flex items-center gap-1.5">
+                  Motif (optionnel)
+                  <HelpTooltip text="Note libre conservée dans l'historique des mouvements de stock, utile pour se souvenir de la raison de cet ajustement (ex. inventaire, casse, produit périmé)." />
+                </span>
+              }
               placeholder="Ex : stock initial, inventaire, produit périmé…"
               value={adjustForm.note}
               onChange={(e) => setAdjustForm({ ...adjustForm, note: e.target.value })}
@@ -572,9 +615,17 @@ export function ProductsPage() {
             )}
 
             <form onSubmit={handleAddSellUnit} className="space-y-3 border-t border-slate-200 dark:border-slate-800 pt-4">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Ajouter une unité de vente</p>
+              <p className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+                Ajouter une unité de vente
+                <HelpTooltip text="Permet de vendre ce produit dans une autre unité que celle du stock (ex. vendre par boîte alors que le stock est suivi à la pièce), avec sa propre conversion et son propre prix. Le stock reste toujours suivi dans l'unité de base du produit." />
+              </p>
               <Select
-                label="Unité"
+                label={
+                  <span className="inline-flex items-center gap-1.5">
+                    Unité
+                    <HelpTooltip text="L'unité utilisée pour cette vente alternative (ex. boîte). Elle doit être différente de l'unité de stock du produit — créez-la d'abord depuis la page Unités si elle n'existe pas encore." />
+                  </span>
+                }
                 required
                 value={newSellUnit.unitId}
                 onChange={(e) => setNewSellUnit({ ...newSellUnit, unitId: e.target.value })}
@@ -589,7 +640,12 @@ export function ProductsPage() {
                   ))}
               </Select>
               <Input
-                label={`Équivaut à combien de ${sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name} ?`}
+                label={
+                  <span className="inline-flex items-center gap-1.5">
+                    {`Équivaut à combien de ${sellUnitsTarget.unit.symbol ?? sellUnitsTarget.unit.name} ?`}
+                    <HelpTooltip text="Nombre d'unités de stock contenues dans une unité de vente. Ex. si le stock est suivi à la pièce et que la boîte en contient 10, indiquez 10 : vendre une boîte retirera alors 10 pièces du stock." />
+                  </span>
+                }
                 type="number"
                 min="1"
                 required
@@ -597,7 +653,12 @@ export function ProductsPage() {
                 onChange={(e) => setNewSellUnit({ ...newSellUnit, conversionFactor: e.target.value })}
               />
               <AmountInput
-                label="Prix de vente pour cette unité"
+                label={
+                  <span className="inline-flex items-center gap-1.5">
+                    Prix de vente pour cette unité
+                    <HelpTooltip text="Prix facturé pour une unité de vente complète (ex. le prix de toute la boîte), indépendant du prix de l'unité de stock renseigné à la création du produit." />
+                  </span>
+                }
                 required
                 value={newSellUnit.sellingPrice}
                 onChange={(e) => setNewSellUnit({ ...newSellUnit, sellingPrice: e.target.value })}
