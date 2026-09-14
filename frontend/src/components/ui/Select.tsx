@@ -20,9 +20,13 @@ type SelectProps = {
   disabled?: boolean;
   className?: string;
   children: ReactNode;
+  onCreate?: (query: string) => Promise<void> | void;
+  createLabel?: (query: string) => string;
 };
 
 type OptionData = { value: string; label: string; disabled: boolean };
+
+const CREATE_VALUE = "__create__";
 
 function nodeToText(node: ReactNode): string {
   if (node === null || node === undefined || typeof node === "boolean") return "";
@@ -49,12 +53,23 @@ function extractOptions(children: ReactNode): OptionData[] {
 // Champ de sélection filtrable : conserve la même API que <select> (label,
 // value, onChange, children d'<option>) pour rester un remplacement direct,
 // mais affiche un champ de recherche + une liste déroulante filtrée.
-export function Select({ label, value, onChange, required, disabled, className = "", children }: SelectProps) {
+export function Select({
+  label,
+  value,
+  onChange,
+  required,
+  disabled,
+  className = "",
+  children,
+  onCreate,
+  createLabel,
+}: SelectProps) {
   const id = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
+  const [creating, setCreating] = useState(false);
 
   const options = useMemo(() => extractOptions(children), [children]);
   const selected = options.find((o) => o.value === value);
@@ -65,13 +80,27 @@ export function Select({ label, value, onChange, required, disabled, className =
     return options.filter((o) => o.label.toLowerCase().includes(q));
   }, [options, query]);
 
+  const trimmedQuery = query.trim();
+  const canCreate =
+    !!onCreate && trimmedQuery.length > 0 && !options.some((o) => o.label.toLowerCase() === trimmedQuery.toLowerCase());
+
+  const listItems = useMemo(() => {
+    if (!canCreate) return filtered;
+    const createItem: OptionData = {
+      value: CREATE_VALUE,
+      label: creating ? "Création…" : createLabel ? createLabel(trimmedQuery) : `+ Créer « ${trimmedQuery} »`,
+      disabled: creating,
+    };
+    return [...filtered, createItem];
+  }, [filtered, canCreate, creating, createLabel, trimmedQuery]);
+
   useEffect(() => {
     if (!open) setQuery("");
   }, [open]);
 
   useEffect(() => {
     setHighlight(0);
-  }, [filtered.length, open]);
+  }, [listItems.length, open]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -83,8 +112,26 @@ export function Select({ label, value, onChange, required, disabled, className =
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  async function handleCreate() {
+    if (!onCreate || creating) return;
+    setCreating(true);
+    try {
+      await onCreate(trimmedQuery);
+      setOpen(false);
+      setQuery("");
+    } catch {
+      // l'appelant est responsable d'afficher l'erreur ; on garde le menu ouvert
+    } finally {
+      setCreating(false);
+    }
+  }
+
   function selectOption(option: OptionData) {
     if (option.disabled) return;
+    if (option.value === CREATE_VALUE) {
+      handleCreate();
+      return;
+    }
     onChange({ target: { value: option.value } });
     setOpen(false);
     setQuery("");
@@ -100,13 +147,13 @@ export function Select({ label, value, onChange, required, disabled, className =
     }
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setHighlight((h) => Math.min(h + 1, filtered.length - 1));
+      setHighlight((h) => Math.min(h + 1, listItems.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlight((h) => Math.max(h - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      const option = filtered[highlight];
+      const option = listItems[highlight];
       if (option) selectOption(option);
     } else if (e.key === "Escape") {
       setOpen(false);
@@ -144,10 +191,10 @@ export function Select({ label, value, onChange, required, disabled, className =
         />
         {open && !disabled && (
           <ul className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 shadow-lg">
-            {filtered.length === 0 ? (
+            {listItems.length === 0 ? (
               <li className="px-3 py-2 text-sm text-slate-400 dark:text-slate-500">Aucun résultat</li>
             ) : (
-              filtered.map((option, index) => (
+              listItems.map((option, index) => (
                 <li
                   key={option.value || `_empty_${index}`}
                   onMouseDown={(e) => {
@@ -160,7 +207,9 @@ export function Select({ label, value, onChange, required, disabled, className =
                       : `cursor-pointer ${
                           index === highlight
                             ? "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
-                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                            : option.value === CREATE_VALUE
+                              ? "text-emerald-600 dark:text-emerald-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                              : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                         }`
                   } ${option.value === value ? "font-medium" : ""}`}
                 >

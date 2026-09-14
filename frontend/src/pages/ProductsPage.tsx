@@ -3,6 +3,7 @@ import { api, ApiError } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import type { Product, Category, Unit, Location } from "../lib/types";
 import { buildCategoryTree } from "../lib/categoryTree";
+import { generateCategoryCode } from "../lib/categoryCode";
 import { formatAmount } from "../lib/format";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
@@ -128,6 +129,46 @@ export function ProductsPage() {
       setError(e instanceof ApiError ? e.message : "Erreur d'enregistrement");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleCreateCategory(rawName: string) {
+    const name = rawName.trim();
+    if (!name) return;
+    const existing = categories.find((c) => c.parentId === null && c.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      setForm((f) => ({ ...f, categoryId: existing.id }));
+      return;
+    }
+    const code = generateCategoryCode(
+      name,
+      categories.map((c) => c.code)
+    );
+    try {
+      const created = await api.post<Category>("/categories", { name, code });
+      setCategories((prev) => [...prev, created]);
+      setForm((f) => ({ ...f, categoryId: created.id }));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erreur de création de la catégorie");
+      throw e;
+    }
+  }
+
+  async function handleCreateUnit(rawName: string) {
+    const name = rawName.trim();
+    if (!name) return;
+    const existing = units.find((u) => u.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      setForm((f) => ({ ...f, unitId: existing.id }));
+      return;
+    }
+    try {
+      const created = await api.post<Unit>("/units", { name });
+      setUnits((prev) => [...prev, created]);
+      setForm((f) => ({ ...f, unitId: created.id }));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erreur de création de l'unité");
+      throw e;
     }
   }
 
@@ -317,6 +358,8 @@ export function ProductsPage() {
             required
             value={form.categoryId}
             onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+            onCreate={handleCreateCategory}
+            createLabel={(q) => `+ Créer la catégorie « ${q} »`}
           >
             <option value="">Sélectionner…</option>
             {buildCategoryTree(categories).map((c) => (
@@ -331,6 +374,8 @@ export function ProductsPage() {
             required
             value={form.unitId}
             onChange={(e) => setForm({ ...form, unitId: e.target.value })}
+            onCreate={handleCreateUnit}
+            createLabel={(q) => `+ Créer l'unité « ${q} »`}
           >
             <option value="">Sélectionner…</option>
             {units.map((u) => (
