@@ -99,7 +99,7 @@ export function ProductsPage() {
       sku: product.sku ?? "",
       categoryId: product.categoryId,
       unitId: product.unitId,
-      purchasePrice: String(product.purchasePrice),
+      purchasePrice: String(product.purchasePrice ?? ""),
       sellingPrice: String(product.sellingPrice),
       alertThreshold: String(product.alertThreshold),
     });
@@ -277,7 +277,13 @@ export function ProductsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Produits</h1>
-          <HelpTooltip text="Cliquez sur « Ajouter » pour créer un produit. Le tableau liste sa catégorie, son unité, ses prix d'achat/vente et son stock total sur tous les emplacements (en rouge si sous le seuil d'alerte)." />
+          <HelpTooltip
+            text={
+              canWrite
+                ? "Cliquez sur « Ajouter » pour créer un produit. Le tableau liste sa catégorie, son unité, ses prix d'achat/vente et son stock total sur tous les emplacements (en rouge si sous le seuil d'alerte)."
+                : "Le tableau liste la catégorie, l'unité, le prix de vente et le stock total de chaque produit sur tous les emplacements (en rouge si sous le seuil d'alerte)."
+            }
+          />
         </div>
         {canWrite && (
           <Button onClick={openCreate}>
@@ -298,7 +304,7 @@ export function ProductsPage() {
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Nom</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Catégorie</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Unité</th>
-              <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Prix achat</th>
+              {canWrite && <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Prix achat</th>}
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Prix vente</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Stock total</th>
               {canWrite && (
@@ -314,7 +320,7 @@ export function ProductsPage() {
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {filteredProducts.length === 0 && (
               <tr>
-                <td colSpan={canWrite ? 7 : 6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
+                <td colSpan={canWrite ? 7 : 5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
                   {search
                     ? "Aucun résultat"
                     : canWrite
@@ -336,7 +342,9 @@ export function ProductsPage() {
                   {p.category.name}
                 </td>
                 <td className="px-4 py-2 text-slate-700 dark:text-slate-300">{p.unit.name}</td>
-                <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{formatAmount(p.purchasePrice)}</td>
+                {canWrite && (
+                  <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{formatAmount(p.purchasePrice ?? "0")}</td>
+                )}
                 <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{formatAmount(p.sellingPrice)}</td>
                 <td
                   className={`px-4 py-2 text-right font-medium ${

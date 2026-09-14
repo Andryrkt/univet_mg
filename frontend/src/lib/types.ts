@@ -83,7 +83,7 @@ export type Product = {
   category: Category;
   unitId: string;
   unit: Unit;
-  purchasePrice: string;
+  purchasePrice?: string;
   sellingPrice: string;
   alertThreshold: number;
   isActive: boolean;

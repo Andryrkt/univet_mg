@@ -4,7 +4,7 @@ import { requireUser, requireRole, handleApiError } from "@/lib/api-helpers";
 
 export async function GET(request: Request) {
   try {
-    await requireUser(request);
+    const user = await requireUser(request);
     const products = await prisma.product.findMany({
       include: {
         category: true,
@@ -15,7 +15,9 @@ export async function GET(request: Request) {
       },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json(products);
+    // Le prix d'achat (coût) est une information sensible réservée à Admin/Modérateur.
+    const response = user.role === "SELLER" ? products.map(({ purchasePrice, ...rest }) => rest) : products;
+    return NextResponse.json(response);
   } catch (error) {
     return handleApiError(error);
   }
