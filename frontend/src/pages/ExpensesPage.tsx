@@ -73,6 +73,24 @@ export function ExpensesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, debouncedSearch]);
 
+  async function handleCreateCategory(rawName: string) {
+    const name = rawName.trim();
+    if (!name) return;
+    const existing = categories.find((c) => c.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+      setForm((f) => ({ ...f, categoryId: existing.id }));
+      return;
+    }
+    try {
+      const created = await api.post<ExpenseCategory>("/expense-categories", { name });
+      setCategories((prev) => [...prev, created]);
+      setForm((f) => ({ ...f, categoryId: created.id }));
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Erreur de création de la catégorie");
+      throw e;
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -108,10 +126,17 @@ export function ExpensesPage() {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:grid-cols-2">
         <Select
-          label="Catégorie"
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              Catégorie
+              <HelpTooltip text="Tapez le nom d'une catégorie existante pour la sélectionner. Si elle n'existe pas encore, tapez son nom puis cliquez sur « + Créer » pour l'ajouter directement, sans quitter ce formulaire." />
+            </span>
+          }
           required
           value={form.categoryId}
           onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+          onCreate={handleCreateCategory}
+          createLabel={(q) => `+ Créer la catégorie « ${q} »`}
         >
           <option value="">Sélectionner…</option>
           {categories.map((c) => (
