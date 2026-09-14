@@ -9,11 +9,12 @@ export function SuppliersPage() {
   return (
     <SimpleCrudPage<Supplier>
       title="Fournisseurs"
+      description="Gérez ici vos fournisseurs. Ajoutez-en un avant de pouvoir lui passer une commande fournisseur — leurs coordonnées servent aussi à les recontacter en cas de besoin."
       endpoint="/suppliers"
       canWrite={canWrite}
       fields={[
         { name: "name", label: "Nom", required: true },
-        { name: "contactName", label: "Contact" },
+        { name: "contactName", label: "Contact", help: "Nom de la personne à contacter chez ce fournisseur, si différent du nom de l'entreprise." },
         { name: "phone", label: "Téléphone" },
         { name: "email", label: "Email" },
         { name: "address", label: "Adresse" },

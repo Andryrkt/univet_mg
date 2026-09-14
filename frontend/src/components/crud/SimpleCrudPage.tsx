@@ -3,6 +3,7 @@ import { api, ApiError } from "../../lib/api";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Modal } from "../ui/Modal";
+import { HelpTooltip } from "../ui/HelpTooltip";
 import { PlusIcon } from "../ui/icons";
 import { SearchInput } from "../ui/SearchInput";
 
@@ -10,6 +11,7 @@ export type CrudField<T> = {
   name: keyof T & string;
   label: string;
   required?: boolean;
+  help?: string;
 };
 
 export type CrudColumn<T> = {
@@ -20,6 +22,7 @@ export type CrudColumn<T> = {
 
 type SimpleCrudPageProps<T extends { id: string }> = {
   title: string;
+  description?: string;
   endpoint: string;
   fields: CrudField<T>[];
   columns: CrudColumn<T>[];
@@ -28,6 +31,7 @@ type SimpleCrudPageProps<T extends { id: string }> = {
 
 export function SimpleCrudPage<T extends { id: string }>({
   title,
+  description,
   endpoint,
   fields,
   columns,
@@ -113,7 +117,10 @@ export function SimpleCrudPage<T extends { id: string }>({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h1>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{title}</h1>
+          {description && <HelpTooltip text={description} />}
+        </div>
         {canWrite && (
           <Button onClick={openCreate}>
             <PlusIcon className="mr-1.5 h-4 w-4" />
@@ -185,7 +192,16 @@ export function SimpleCrudPage<T extends { id: string }>({
           {fields.map((f) => (
             <Input
               key={f.name}
-              label={f.label}
+              label={
+                f.help ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    {f.label}
+                    <HelpTooltip text={f.help} />
+                  </span>
+                ) : (
+                  f.label
+                )
+              }
               required={f.required}
               value={form[f.name] ?? ""}
               onChange={(e) => setForm((prev) => ({ ...prev, [f.name]: e.target.value }))}
