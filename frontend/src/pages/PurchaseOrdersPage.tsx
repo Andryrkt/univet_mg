@@ -7,7 +7,8 @@ import { Input } from "../components/ui/Input";
 import { AmountInput } from "../components/ui/AmountInput";
 import { Select } from "../components/ui/Select";
 import { Modal } from "../components/ui/Modal";
-import { PlusIcon } from "../components/ui/icons";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
+import { PlusIcon, ChevronRightIcon } from "../components/ui/icons";
 import { SearchInput } from "../components/ui/SearchInput";
 import { Pagination } from "../components/ui/Pagination";
 
@@ -140,7 +141,10 @@ export function PurchaseOrdersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Commandes fournisseurs</h1>
+        <div className="flex items-center gap-1.5">
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Commandes fournisseurs</h1>
+          <HelpTooltip text="Créez une commande avec ses lignes (produit, quantité, prix d'achat), puis ouvrez-la pour la réceptionner — en une seule fois ou en plusieurs livraisons partielles." />
+        </div>
         <Button onClick={() => setModalOpen(true)}>
           <PlusIcon className="mr-1.5 h-4 w-4" />
           Nouvelle commande
@@ -158,15 +162,21 @@ export function PurchaseOrdersPage() {
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Fournisseur</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Emplacement</th>
               <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Date</th>
-              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Statut</th>
+              <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">
+                <span className="inline-flex items-center gap-1.5">
+                  Statut
+                  <HelpTooltip text="« En attente » : rien reçu, la commande peut être annulée. « Partiellement reçue » : au moins une réception faite, il reste du solde. « Reçue » : tout a été reçu, ou la commande a été clôturée avec le solde restant abandonné. « Annulée » : commande annulée avant toute réception." />
+                </span>
+              </th>
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Lignes</th>
+              <th className="px-4 py-2" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
-                  {search ? "Aucun résultat" : "Aucune commande"}
+                <td colSpan={6} className="px-4 py-6 text-center text-slate-400 dark:text-slate-500">
+                  {search ? "Aucun résultat" : "Aucune commande. Cliquez sur « Nouvelle commande » pour créer la première."}
                 </td>
               </tr>
             ) : (
@@ -185,6 +195,15 @@ export function PurchaseOrdersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-2 text-right text-slate-700 dark:text-slate-300">{o.items.length}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Link
+                      to={`/commandes/${o.id}`}
+                      className="inline-flex items-center gap-0.5 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                    >
+                      Voir
+                      <ChevronRightIcon className="h-4 w-4" />
+                    </Link>
+                  </td>
                 </tr>
               ))
             )}
@@ -206,7 +225,12 @@ export function PurchaseOrdersPage() {
           </Select>
 
           <Select
-            label="Emplacement destinataire"
+            label={
+              <span className="inline-flex items-center gap-1.5">
+                Emplacement destinataire
+                <HelpTooltip text="L'emplacement où le stock sera ajouté à chaque réception de cette commande." />
+              </span>
+            }
             required
             value={locationId}
             onChange={(e) => setLocationId(e.target.value)}
@@ -220,7 +244,10 @@ export function PurchaseOrdersPage() {
           </Select>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Lignes de commande</p>
+            <p className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
+              Lignes de commande
+              <HelpTooltip text="Un produit, la quantité commandée et le prix d'achat unitaire (PU) par ligne. Vous pourrez recevoir chaque ligne en une ou plusieurs fois depuis la fiche de la commande." />
+            </p>
             {lines.map((line, i) => (
               <div key={i} className="grid grid-cols-[1fr_70px_80px_auto] items-center gap-2">
                 <Select value={line.productId} onChange={(e) => updateLine(i, { productId: e.target.value })} required>

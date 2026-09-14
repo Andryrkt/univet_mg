@@ -5,6 +5,7 @@ import type { PurchaseOrder, ReceptionBatch } from "../lib/types";
 import { formatAmount } from "../lib/format";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { HelpTooltip } from "../components/ui/HelpTooltip";
 
 const statusLabel: Record<PurchaseOrder["status"], string> = {
   PENDING: "En attente",
@@ -115,7 +116,10 @@ export function PurchaseOrderDetailPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Commande — {order.supplier.name}</h1>
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Commande — {order.supplier.name}</h1>
+            <HelpTooltip text="Indiquez la quantité reçue et sa date de péremption pour chaque ligne, puis « Réceptionner ». Vous pouvez le faire en plusieurs fois si la livraison est partielle. Tant qu'il reste du solde à recevoir, la commande peut aussi être clôturée (solde abandonné, stock déjà reçu conservé) ; tant que rien n'a été reçu, elle peut être annulée." />
+          </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Pour <span className="font-medium">{order.location.name}</span> · Créée le{" "}
             {new Date(order.orderDate).toLocaleDateString()} par {order.createdBy.name} ·{" "}
@@ -155,8 +159,22 @@ export function PurchaseOrderDetailPage() {
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">PU</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Déjà reçu</th>
               <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">Reste</th>
-              {canReceive && <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">À réceptionner</th>}
-              {canReceive && <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">Péremption</th>}
+              {canReceive && (
+                <th className="px-4 py-2 text-right font-medium text-slate-600 dark:text-slate-400">
+                  <span className="inline-flex items-center justify-end gap-1.5">
+                    À réceptionner
+                    <HelpTooltip text="Prérempli avec la quantité restante, modifiable si la livraison est partielle (le solde restera « à recevoir » pour une prochaine fois)." />
+                  </span>
+                </th>
+              )}
+              {canReceive && (
+                <th className="px-4 py-2 text-left font-medium text-slate-600 dark:text-slate-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    Péremption
+                    <HelpTooltip text="Optionnel. Si renseignée, cette quantité forme un lot suivi séparément, visible dans le suivi des péremptions du tableau de bord." />
+                  </span>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
