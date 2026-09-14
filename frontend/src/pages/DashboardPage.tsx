@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
-import type { Product, Sale } from "../lib/types";
+import type { Expense, Product, Sale } from "../lib/types";
 import { formatAmount } from "../lib/format";
 import { useSettings } from "../context/SettingsContext";
 
@@ -30,13 +30,15 @@ export function DashboardPage() {
   const { settings } = useSettings();
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.get<Product[]>("/products"), api.get<Sale[]>("/sales")])
-      .then(([p, s]) => {
+    Promise.all([api.get<Product[]>("/products"), api.get<Sale[]>("/sales"), api.get<Expense[]>("/expenses")])
+      .then(([p, s, e]) => {
         setProducts(p);
         setSales(s);
+        setExpenses(e);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -58,6 +60,8 @@ export function DashboardPage() {
   const today = new Date().toDateString();
   const salesToday = sales.filter((s) => new Date(s.createdAt).toDateString() === today);
   const totalToday = salesToday.reduce((sum, s) => sum + Number(s.totalAmount), 0);
+  const expensesToday = expenses.filter((e) => new Date(e.date).toDateString() === today);
+  const totalExpensesToday = expensesToday.reduce((sum, e) => sum + Number(e.amount), 0);
 
   const now = Date.now();
   const msPerDay = 1000 * 60 * 60 * 24;
@@ -103,10 +107,11 @@ export function DashboardPage() {
     <div className="space-y-6">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Tableau de bord</h1>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Produits actifs" value={activeProducts.length} />
         <StatCard label="Ventes aujourd'hui" value={salesToday.length} />
         <StatCard label="Chiffre d'affaires du jour" value={`${formatAmount(totalToday)} Ar`} />
+        <StatCard label="Dépenses du jour" value={`${formatAmount(totalExpensesToday)} Ar`} />
       </div>
 
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
